@@ -3,7 +3,8 @@
 		xmlns:s="library://ns.adobe.com/flex/spark"
 		title="Word details"
 		backgroundColor="#29435E"
-		creationComplete="wordDetails_creationCompleteHandler(event)">
+		creationComplete="wordDetails_creationCompleteHandler(event)"
+		viewActivate="wordDetails_viewActivateHandler(event)">
 	
 	<fx:Metadata>
 		[ResourceBundle("resources")]
@@ -11,23 +12,209 @@
 	
 	<fx:Script>
 		<![CDATA[
+			import mx.collections.ArrayCollection;
 			import mx.events.FlexEvent;
+			
+			import socnet.SNFacebook;
+			import socnet.SNTwitter;
+			
+			import spark.events.IndexChangeEvent;
+			import spark.events.ViewNavigatorEvent;
+			
+			import utilities.AppSettings;
+			
+			[Bindable]
+			private var socNets:ArrayCollection;
+			
+			[Embed(source='assets/images/action-back.png')]
+			private var iconBack:Class;
+			
+			[Embed(source='assets/images/action-share.png')]
+			private var iconShare:Class;
+			
+			private var currentWord:Object;
+			private var _alert:AlertMsgShare;
 			
 			protected function wordDetails_creationCompleteHandler(event:FlexEvent):void {
 				this.title = resourceManager.getString('resources','menu_Word');
 			}
 			
+			protected function wordDetails_viewActivateHandler(event:ViewNavigatorEvent):void {
+				this.title = resourceManager.getString('resources','menu_Word');
+				this.btnComments.label = resourceManager.getString('resources','contextmenu_viewcomments');
+				this.btnSendComment.label = resourceManager.getString('resources','contextmenu_sendcomments');
+				
+				this.socNets = new ArrayCollection();
+				this.socNets.addItem(resourceManager.getString('resources','share_MenuShare'));
+				this.socNets.addItem(resourceManager.getString('resources','share_MenuFacebook'));
+				this.socNets.addItem(resourceManager.getString('resources','share_MenuTwitter'));
+				this.socNets.addItem(resourceManager.getString('resources','share_MenuCancel'));
+				
+				this.lblExamples.text = resourceManager.getString('resources','examples');
+				this.lblEthimology.text = resourceManager.getString('resources','ethimology');
+				if (data != null) {
+					this.tabBarVisible = false;
+					this.actionBarVisible = true;
+					this.currentWord = data.word; 
+					
+					this.title = this.currentWord.word;
+					
+					var btnBack:Button = new spark.components.Button();
+					btnBack.setStyle("icon", this.iconBack); 
+					btnBack.addEventListener(MouseEvent.CLICK, btnBack_clickHandler);
+					this.navigationContent = new Array();
+					this.navigationContent.push(btnBack);
+					
+					var btnShare:Button = new spark.components.Button();
+					btnShare.setStyle("icon", this.iconShare); 
+					btnShare.addEventListener(MouseEvent.CLICK, btnShare_clickHandler);
+					this.actionContent = new Array();
+					this.actionContent.push(btnShare);
+					
+					this.lblAuthor.text = this.currentWord.addedby;
+					this.lblWord.text = this.currentWord.word;
+					this.lblDescription.text = this.currentWord.description;
+					this.lblExamplesInfo.text = this.currentWord.examples;
+					this.lblEthimologyInfo.text = this.currentWord.ethimology;
+
+					var ad:String = "";
+					if (this.currentWord.addedbyemail != "")
+						ad += this.currentWord.addedbyemail;
+					if (this.currentWord.addedbyurl != "")
+						ad += ((ad == "") ? "" : " / ") + this.currentWord.addedbyurl;
+					this.lblAuthorEmailURL.text = ad;
+				}
+			}
+			
+			protected function btnBack_clickHandler(event:MouseEvent):void {
+				navigator.popView();
+			}
+			
+			protected function btnShare_clickHandler(event:MouseEvent):void {
+				this.spCont.visible = !this.spCont.visible;
+				this.spCont.move(this.width - this.spCont.width - 4, 4);
+				this.spShareNets.selectedIndex = 0;
+			}
+			
+			protected function spCategory_changeHandler(event:IndexChangeEvent):void {
+				switch(this.spShareNets.selectedIndex) {
+					case 1: {
+						// Facebook
+						var fbPost:String = "Neolog.bg - " + this.currentWord.word;
+						fbPost += " http://neolog.bg/word/" + this.currentWord.wid;
+						var engineFacebook:SNFacebook = new SNFacebook(stage);
+						engineFacebook._view = this;
+						engineFacebook.PostToFacebook(fbPost);
+						break;
+					}
+					case 2: {
+						// Twitter
+						var tweet:String = "Neolog.bg - " + this.currentWord.word;
+						tweet += " http://wid.bg/word/" + this.currentWord.wid;
+						tweet += " #neolog";
+						var engineTwitter:SNTwitter = new SNTwitter(stage);
+						engineTwitter._view = this;
+						engineTwitter.PostToTwitter(tweet);
+						break;
+					}
+					default: {
+						this.spCont.visible = false;
+						break;
+					}
+				}
+				this.spCont.visible = false;
+			}
+			
 			public function postFacebookFinished(result:Object, fail:Object):void {
+				if (result)
+					this.showAlert(resourceManager.getString('resources','facebook_publishok'));
+				else if (fail != null && fail.error != null && fail.error.code == "506")
+					this.showAlert(resourceManager.getString('resources','facebook_err_duplicate'));
+				else
+					this.showAlert(resourceManager.getString('resources','facebook_publisherror'));
 			}
 			
 			public function postTwitterFinished(result:Object, fail:Object):void {
+				if (result)
+					this.showAlert(resourceManager.getString('resources','twitter_publishok'));
+				else
+					this.showAlert(resourceManager.getString('resources','twitter_err_generic'));
+			}
+			
+			private function showAlert(msg:String):void {
+				this._alert = new AlertMsgShare();
+				this._alert.open(this, true);
+				this._alert.alertPostTitleWindow.title = resourceManager.getString('resources','share_MenuShareN');
+				this._alert.alertText.text = msg;
+				this._alert.move(((this.width / 2) - (this._alert.width / 2)), ((this.height / 2) - (this._alert.height / 2)));
+			}
+			
+			protected function btnComments_clickHandler(event:MouseEvent):void {
+				var obj:Object = new Object();
+				obj.oid = this.currentWord.wid;
+				navigator.pushView(CommentsView, obj);
+			}
+			
+			protected function btnSendComment_clickHandler(event:MouseEvent):void {
+				var obj:Object = new Object();
+				obj.oid = this.currentWord.wid;
+				navigator.pushView(SendCommentView, obj);
 			}
 			
 		]]>
 	</fx:Script>
-			
+	
 	<fx:Declarations>
-		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<fx:Component className="AlertMsgShare">
+			<s:SkinnablePopUpContainer x="0" y="0">
+				<s:TitleWindow id="alertPostTitleWindow" title="" close="close()">
+					<s:VGroup horizontalAlign="center" verticalAlign="middle" paddingTop="8" paddingBottom="8" paddingLeft="8" paddingRight="8" gap="5" width="100%">
+						<s:Label id="alertText" text="No results!"/>
+						<s:Button id="alertOK" label="OK" click="close()"/>
+					</s:VGroup>
+				</s:TitleWindow>
+			</s:SkinnablePopUpContainer>
+		</fx:Component>
 	</fx:Declarations>
+	
+	<fx:Style>
+		.boldTitle { fontWeight: bold; color: #FFFFFF; }
+	</fx:Style>
+	
+	<s:navigationContent>
+		<s:Button icon="@Embed('assets/images/action-back.png')" click="btnBack_clickHandler(event)" />
+	</s:navigationContent>
+	<s:actionContent>
+		<s:Button id="btnShare" icon="@Embed('assets/images/action-share.png')" click="btnShare_clickHandler(event)" />
+	</s:actionContent>
+	
+	<s:SpinnerListContainer width="280" id="spCont" visible="false" depth="1">
+		<s:SpinnerList id="spShareNets" width="100%" dataProvider="{socNets}" change="spCategory_changeHandler(event)" />
+	</s:SpinnerListContainer>
+	
+	<s:Scroller height="100%" width="100%" depth="0">
+		<s:VGroup gap="10" paddingBottom="4" paddingTop="4" paddingLeft="4" paddingRight="4" width="100%" height="100%">
+			<s:Spacer height="6" />
+			<s:Label id="lblWord" text="word..." width="100%" styleName="boldTitle" />
+			<s:Spacer height="6" />
+			<s:Label id="lblDescription" text="Description..." width="100%" styleName="boldTitle" />
+			<s:Spacer height="10" />
+			<s:Label id="lblExamples" text="Examples..." width="100%" styleName="boldTitle" />
+			<s:Spacer height="4" />
+			<s:Label id="lblExamplesInfo" text="..." width="100%" color="#FFFFFF" />
+			<s:Spacer height="10" />
+			<s:Label id="lblEthimology" text="Ethimology..." width="100%" styleName="boldTitle" />
+			<s:Spacer height="4" />
+			<s:Label id="lblEthimologyInfo" text="..." width="100%" color="#FFFFFF" />
+			<s:Spacer height="10" />
+			<s:Label id="lblAuthor" text="Author..." width="100%" styleName="boldTitle" />
+			<s:Spacer height="10" />
+			<s:Label id="lblAuthorEmailURL" text="..." width="100%" color="#FFFFFF" />
+			<s:Spacer height="10" />
+			<s:Button id="btnComments" label="Comments..." skinClass="skins.GazButtonSkin" click="btnComments_clickHandler(event)" />
+			<s:Spacer height="10" />
+			<s:Button id="btnSendComment" label="Send comment..." skinClass="skins.GazButtonSkin" click="btnSendComment_clickHandler(event)" />
+		</s:VGroup>
+	</s:Scroller>
 
 </s:View>

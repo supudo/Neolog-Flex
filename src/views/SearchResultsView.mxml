@@ -55,7 +55,7 @@
 			}
 			
 			protected function listWords_changeHandler(event:IndexChangeEvent):void {
-				navigator.pushView(WordDetailsView, this.listSearchResults.selectedItem);
+				navigator.pushView(WordDetailsView, {word: this.listSearchResults.selectedItem});
 			}
 			
 		]]>

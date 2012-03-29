@@ -33,7 +33,6 @@
 			
 			protected function words_creationCompleteHandler(event:FlexEvent):void {
 				this.title = resourceManager.getString('resources','menu_Words');
-				this.spinnerLoading.visible = false;
 				this.actionBarVisible = false;
 			}
 			
@@ -82,7 +81,7 @@
 			}
 
 			protected function listWords_changeHandler(event:IndexChangeEvent):void {
-				navigator.pushView(WordDetailsView, this.listWords.selectedItem);
+				navigator.pushView(WordDetailsView, {word: this.listWords.selectedItem});
 			}
 
 			protected function loadWords():void {
@@ -107,8 +106,6 @@
 	<fx:Declarations>
 		<!-- Place non-visual elements (e.g., services, value objects) here -->
 	</fx:Declarations>
-	
-	<s:BusyIndicator id="spinnerLoading" width="50" height="50" symbolColor="#FFFFFF"/>
 	
 	<s:List id="listWords" width="100%" height="100%" dataProvider="{wordsModel.items}"
 			alternatingItemColors="[0xF6F6F6, 0xFFFFFF]"
