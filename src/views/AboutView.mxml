@@ -29,11 +29,14 @@
 				aboutHtml = aboutHtml.replace(new RegExp("<br />", "g"), "");
 				
 				var myStyleSheet:StyleSheet = new StyleSheet();
-				var styles:String = "a { color: #000000; text-decoration: underline; } a:hover { color: #DF9368; }";
+				var styles:String = "body { background: #29435E; } a { color: #FFFFFF; text-decoration: underline; } a:hover { color: #F6F6F6; }";
 				myStyleSheet.parseCSS(styles);
-				
+
 				StyleableTextField(this.txtContent.textDisplay).styleSheet = myStyleSheet;
 				StyleableTextField(this.txtContent.textDisplay).htmlText = aboutHtml;
+				StyleableTextField(this.txtContent.textDisplay).textColor = 0xFFFFFF;
+				StyleableTextField(this.txtContent.textDisplay).background = true;
+				StyleableTextField(this.txtContent.textDisplay).backgroundColor = 0x29435E;
 			}
 			
 		]]>

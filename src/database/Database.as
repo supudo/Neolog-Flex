@@ -306,6 +306,57 @@ package database {
 		}
 		
 		/** ========================================================
+		 * Words
+		 **/
+		public function addWord(ent:Object):void {
+			if (ent) {
+				var exists:Boolean = this.hasWord(ent.wid);
+				AppSettings.getInstance().logThis(null, "addWord (" + (exists ? "update" : "insert") + ") ... " + ent.wid);
+				var sqlWrapper:SQLWrapper = this.sqlStatementFactory.newInstanceRT(((exists) ? this.dbSchema.UPDATE_WORDS : this.dbSchema.INSERT_WORDS));
+				sqlWrapper.statement.parameters[":wid"] = ent.wid; 
+				sqlWrapper.statement.parameters[":wordletter"] =  ent.wordletter;
+				sqlWrapper.statement.parameters[":nid"] = ent.nestid;
+				sqlWrapper.statement.parameters[":word"] = ent.word;
+				sqlWrapper.statement.parameters[":example"] = ent.ex;
+				sqlWrapper.statement.parameters[":ethimology"] = ent.eth;
+				sqlWrapper.statement.parameters[":description"] = ent.desc;
+				sqlWrapper.statement.parameters[":derivatives"] = "";
+				sqlWrapper.statement.parameters[":commentcount"] = ent.commcount;
+				sqlWrapper.statement.parameters[":addedbyurl"] = ent.addedby_url;
+				sqlWrapper.statement.parameters[":addedbyemail"] = ent.addedby_email;
+				sqlWrapper.statement.parameters[":addedby"] = ent.addedby;
+				sqlWrapper.statement.parameters[":addedatdatestamp"] = ent.createddatestamp;
+				var matches : Array = ent.createddate.match(/(\d\d\d\d)-(\d\d)-(\d\d)/);
+				var addedAdDate:Date = new Date();
+				addedAdDate.setUTCFullYear(int(matches[1]), int(matches[2]) - 1, int(matches[3]));
+				sqlWrapper.statement.parameters[":addedatdate"] = addedAdDate;
+				sqlWrapper.statement.execute();
+			}
+		}
+		
+		public function hasWord(wid:uint):Boolean {
+			var alreadyExisting:Boolean = false;
+			if (wid is Number) {
+				var sqlWrapper:SQLWrapper = this.sqlStatementFactory.newInstanceRT(this.dbSchema.GET_WORD);
+				sqlWrapper.statement.parameters[":wid"] = wid;
+				sqlWrapper.statement.execute();
+				sqlWrapper.result = sqlWrapper.statement.getResult(); 
+				alreadyExisting = sqlWrapper.result.data != null && sqlWrapper.result.data.length > 0;
+			}
+			return alreadyExisting;
+		}
+		public function searchWords(searchQuery:String):Array {
+			var items:Array = null;
+			var sqlWrapper:SQLWrapper = this.sqlStatementFactory.newInstanceRT(this.dbSchema.SEARCH_WORDS);
+			sqlWrapper.statement.parameters[":searchq"] = "%" + searchQuery + "%";
+			sqlWrapper.statement.execute();
+			sqlWrapper.result = sqlWrapper.statement.getResult();
+			if (sqlWrapper.result != null && sqlWrapper.result.data != null)
+				items = sqlWrapper.result.data;
+			return items;
+		}
+		
+		/** ========================================================
 		 * Gets the last inserted rowid, according to the function last_insert_rowid() in SQLite
 		 * 		 
 		 * @param args Array [responder:DatabaseRespodner]

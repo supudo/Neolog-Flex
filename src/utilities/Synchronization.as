@@ -33,12 +33,12 @@ package utilities {
 		
 		private var SERVICE_NESTS:String = "?action=GetNests";
 		private var SERVICE_TEXTCONTENT:String = "?action=GetContent";
-		private var SERVICE_WORDSFORNEST:String = "?action=FetchWordsForNest";
-		private var SERVICE_WORDSFORLETTER:String = "?action=FetchWordsForLetter";
-		private var SERVICE_WORDCOMMENTS:String = "?action=FetchWordComments";
+		private var SERVICE_WORDSFORNEST:String = "?action=FetchWordsForNest&wd=2";
+		private var SERVICE_WORDSFORLETTER:String = "?action=FetchWordsForLetter&wd=2";
+		private var SERVICE_WORDCOMMENTS:String = "?action=FetchWordComments&wd=2";
 		private var SERVICE_SENDWORD:String = "?action=SendWord";
 		private var SERVICE_SENDCOMMENT:String = "?action=SendComment";
-		private var SERVICE_SEARCH:String = "?action=Search";
+		private var SERVICE_SEARCH:String = "?action=Search&wd=2";
 		
 		private var SERVICE_ID_NESTS:uint = 1;
 		private var SERVICE_ID_TEXTCONTENT:uint = 2;
@@ -146,6 +146,10 @@ package utilities {
 					this.handleSendWord(jsonResponse);
 					break;
 				}
+				case this.SERVICE_ID_SEARCH: {
+					this.handleSearch(jsonResponse);
+					break;
+				}
 				default: {
 					break;
 				}
@@ -194,6 +198,18 @@ package utilities {
 			this.dispatchEvent(new DataEvent("sendWordFinished", true, false, returnObject));
 		}
 		
+		private function handleSearch(jsonResponse:String):void {
+			var entities:Object = JSON.parse(jsonResponse);
+			if (entities != null && entities.Search != null) {
+				for (var i:uint=0; i<entities.Search.length; i++) {
+					var ent:Object = entities.Search[i];
+					var cid:uint = ent.wid;
+					this.dbHelper.addWord(ent);
+				}
+			}
+			this.dispatchEvent(new Event("searchFinished", true));
+		}
+		
 		/**
 		 * Publics
 		 **/
@@ -211,6 +227,15 @@ package utilities {
 				var token:AsyncToken = this.httpService.send({jsonobj:JSON.stringify(obj)});
 				token.addResponder(new mx.rpc.Responder(onJSONResult, onJSONFault));
 			}
+		}
+		public function startSearch(searchQuery:String):void {
+			AppSettings.getInstance().logThis(null, "startSearch : searchQuery = '" + searchQuery + "'");
+			this.ServiceID = this.SERVICE_ID_SEARCH;
+			this.httpService.url = AppSettings.getInstance().webServicesURL + this.SERVICE_SEARCH + "&q=" + searchQuery;
+			this.httpService.addEventListener(ResultEvent.RESULT, serviceResult);
+			this.httpService.addEventListener(FaultEvent.FAULT, serviceError);
+			var token:AsyncToken = this.httpService.send();
+			token.addResponder(new mx.rpc.Responder(onJSONResult, onJSONFault));
 		}
 
 	}

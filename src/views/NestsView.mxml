@@ -4,7 +4,8 @@
 		title="Nests"
 		actionBarVisible="false"
 		creationComplete="nests_creationCompleteHandler(event)"
-		viewActivate="nests_viewActivateHandler(event)">
+		viewActivate="nests_viewActivateHandler(event)"
+		backgroundColor="#29435E">
 	
 	<s:layout>
 		<s:VerticalLayout gap="0"/>

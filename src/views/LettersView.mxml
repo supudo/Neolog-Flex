@@ -4,7 +4,8 @@
 		title="Letters"
 		actionBarVisible="false"
 		creationComplete="letters_creationCompleteHandler(event)"
-		viewActivate="letters_viewActivateHandler(event)">
+		viewActivate="letters_viewActivateHandler(event)"
+		backgroundColor="#29435E">
 	
 	<s:layout>
 		<s:VerticalLayout gap="0"/>

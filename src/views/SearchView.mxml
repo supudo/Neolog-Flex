@@ -2,9 +2,10 @@
 <s:View xmlns:fx="http://ns.adobe.com/mxml/2009" 
 		xmlns:s="library://ns.adobe.com/flex/spark"
 		xmlns:controls="controls.*"
-		backgroundColor="#29435E"
 		title="Search"
-		creationComplete="search_creationCompleteHandler(event)">
+		viewActivate="searchView_viewActivateHandler(event)"
+		updateComplete="searchView_updateCompleteHandler(event)"
+		backgroundColor="#29435E">
 	
 	<fx:Metadata>
 		[ResourceBundle("resources")]
@@ -12,17 +13,99 @@
 	
 	<fx:Script>
 		<![CDATA[
+			import mx.collections.ArrayCollection;
 			import mx.events.FlexEvent;
-
-			protected function search_creationCompleteHandler(event:FlexEvent):void {
+			
+			import spark.events.PopUpEvent;
+			import spark.events.ViewNavigatorEvent;
+			
+			import utilities.AppSettings;
+			import utilities.Synchronization;
+			protected var _sync:Synchronization;
+			
+			[Bindable]
+			private var items:ArrayCollection;
+			
+			private var searchQuery:String = "";
+			
+			protected function searchView_viewActivateHandler(event:ViewNavigatorEvent):void {
 				this.title = resourceManager.getString('resources','menu_Search');
+				this.lblSearchFor.text = resourceManager.getString('resources','action_SearchFor');
+				this.btnSearch.label = resourceManager.getString('resources','action_Search');
+			}
+			
+			protected function searchView_updateCompleteHandler(event:FlexEvent):void {
+				if (navigator.poppedViewReturnedObject != null) {
+					var data:Object = navigator.poppedViewReturnedObject;
+					if (data.object != null && data.object.searchQuery != null) {
+						this.searchQuery = data.object.searchQuery;
+						this.txtQuery.text = this.searchQuery;
+					}
+				}
+			}
+			
+			protected function btnSearch_clickHandler(event:MouseEvent):void {
+				this.searchQuery = this.txtQuery.text;
+				if (AppSettings.getInstance().stOnlineSearch) {
+					AppSettings.getInstance().logThis(null, "Starting search ... ");
+					this.addEventListener("searchFinished", searchFinished);
+					this._sync = new Synchronization(null);
+					this._sync.addEventListener("searchFinished", searchFinished);
+					this._sync.dbHelper = AppSettings.getInstance().dbHelper;
+					this._sync.startSearch(this.searchQuery);
+				}
+				else
+					this.doSearch();
+			}
+			
+			public function searchFinished(event:Event):void {
+				AppSettings.getInstance().logThis(null, "Finished search ... ");
+				this.removeEventListener("searchFinished", searchFinished);
+				this.doSearch();
+			}
+			
+			private function doSearch():void {
+				var wrds:Array = AppSettings.getInstance().dbHelper.searchWords(this.searchQuery);
+				if (wrds != null) {
+					AppSettings.getInstance().logThis(null, "found = " + wrds.length);
+					var o:Object = new Object();
+					o.wrds = wrds;
+					o.searchQuery = this.searchQuery;
+					navigator.pushView(SearchResultsView, o);
+				}
+				else {
+					var _alert:AlertMsg = new AlertMsg();
+					_alert.open(this, true);
+					_alert.alertTitleWindow.title = resourceManager.getString('resources','menu_Search');
+					_alert.alertText.text = resourceManager.getString('resources','search_NoResults');
+					_alert.move(((this.width / 2) - (_alert.width / 2)), ((this.height / 2) - (_alert.height / 2)));
+				}
 			}
 			
 		]]>
 	</fx:Script>
 	
 	<fx:Declarations>
-		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<fx:Component className="AlertMsg">
+			<s:SkinnablePopUpContainer x="0" y="0">
+				<s:TitleWindow id="alertTitleWindow" title="" close="close()" styleName="Alert">
+					<s:VGroup horizontalAlign="center" verticalAlign="middle" paddingTop="8" paddingBottom="8" paddingLeft="8" paddingRight="8" gap="5" width="100%">
+						<s:Label id="alertText" text="No results!"/>
+						<s:Button id="alertOK" label="OK" click="close()"/>
+					</s:VGroup>
+				</s:TitleWindow>
+			</s:SkinnablePopUpContainer>
+		</fx:Component>
 	</fx:Declarations>
 	
+	<s:Scroller height="100%" width="100%">
+		<s:VGroup gap="10" paddingBottom="4" paddingTop="4" paddingLeft="4" paddingRight="4" width="100%" height="100%" verticalAlign="middle">
+			<s:Label id="lblSearchFor" width=" 100%" text="Search for ..." textAlign="center" color="#FFFFFF" />
+			<s:TextInput id="txtQuery" width="100%" />
+			<s:Spacer height="10" />
+			<s:HGroup horizontalAlign="center" width="100%">
+				<s:Button id="btnSearch" label="Search..." skinClass="skins.GazButtonSkin" click="btnSearch_clickHandler(event)" />
+			</s:HGroup>
+		</s:VGroup>
+	</s:Scroller>
 </s:View>
