@@ -30,8 +30,6 @@ package utilities {
 		public var TwitterCallbackURI:String = AppCallbackURI;
 		public var TwitterOAuthToken:String = "";
 		public var TwitterOAuthTokenSecret:String = "";
-		public var CurrentNestID:uint = 0;
-		public var CurrentLetter:String = "";
 		public var Letters:Array = new Array("А", "Б", "В", "Г", "Д", "Е", "Ж", "З", "И", "Й", "К", "Л", "М", "Н", "О", "П", "Р", "С", "Т", "У", "Ф", "Х", "Ц", "Ч", "Ш", "Щ", "Ъ", "Ю", "Я", "Други..."); 
 		
 		public function logThis(ctrl:View, ... args):void {

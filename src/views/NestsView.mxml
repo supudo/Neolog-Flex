@@ -62,7 +62,10 @@
 			}
 			
 			protected function listNests_changeHandler(event:IndexChangeEvent):void {
-				AppSettings.getInstance().CurrentNestID = this.listNests.selectedItem.nid;
+				var obj:Object = new Object();
+				obj.nestid = this.listNests.selectedItem.nid;
+				obj.letterid = 0;
+				navigator.pushView(WordsView, obj);
 			}
 			
 		]]>
@@ -74,7 +77,7 @@
 	
 	<s:List id="listNests" width="100%" height="100%" dataProvider="{nestsModel.items}"
 			alternatingItemColors="[0xF6F6F6, 0xFFFFFF]"
-			change="listNests_changeHandler(event)" labelField="nest" textAlign="center">
-	</s:List>
+			change="listNests_changeHandler(event)" labelField="nest" textAlign="center"
+			contentBackgroundColor="#29435E" />
 	
 </s:View>

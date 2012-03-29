@@ -345,10 +345,33 @@ package database {
 			}
 			return alreadyExisting;
 		}
+
 		public function searchWords(searchQuery:String):Array {
 			var items:Array = null;
 			var sqlWrapper:SQLWrapper = this.sqlStatementFactory.newInstanceRT(this.dbSchema.SEARCH_WORDS);
 			sqlWrapper.statement.parameters[":searchq"] = "%" + searchQuery + "%";
+			sqlWrapper.statement.execute();
+			sqlWrapper.result = sqlWrapper.statement.getResult();
+			if (sqlWrapper.result != null && sqlWrapper.result.data != null)
+				items = sqlWrapper.result.data;
+			return items;
+		}
+		
+		public function getWordsForNest(nid:uint):Array {
+			var items:Array = null;
+			var sqlWrapper:SQLWrapper = this.sqlStatementFactory.newInstanceRT(this.dbSchema.GET_WORDS_FOR_NEST);
+			sqlWrapper.statement.parameters[":nid"] = nid;
+			sqlWrapper.statement.execute();
+			sqlWrapper.result = sqlWrapper.statement.getResult();
+			if (sqlWrapper.result != null && sqlWrapper.result.data != null)
+				items = sqlWrapper.result.data;
+			return items;
+		}
+		
+		public function getWordsForLetter(letter:String):Array {
+			var items:Array = null;
+			var sqlWrapper:SQLWrapper = this.sqlStatementFactory.newInstanceRT(this.dbSchema.GET_WORDS_FOR_LETTER);
+			sqlWrapper.statement.parameters[":wordletter"] = letter;
 			sqlWrapper.statement.execute();
 			sqlWrapper.result = sqlWrapper.statement.getResult();
 			if (sqlWrapper.result != null && sqlWrapper.result.data != null)

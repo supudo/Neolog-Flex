@@ -150,6 +150,14 @@ package utilities {
 					this.handleSearch(jsonResponse);
 					break;
 				}
+				case this.SERVICE_ID_WORDSFORNEST: {
+					this.handleWordsForNest(jsonResponse);
+					break;
+				}
+				case this.SERVICE_ID_WORDSFORLETTER: {
+					this.handleWordsForLetter(jsonResponse);
+					break;
+				}
 				default: {
 					break;
 				}
@@ -210,6 +218,30 @@ package utilities {
 			this.dispatchEvent(new Event("searchFinished", true));
 		}
 		
+		private function handleWordsForNest(jsonResponse:String):void {
+			var entities:Object = JSON.parse(jsonResponse);
+			if (entities != null && entities.FetchWordsForNest != null) {
+				for (var i:uint=0; i<entities.FetchWordsForNest.length; i++) {
+					var ent:Object = entities.FetchWordsForNest[i];
+					var cid:uint = ent.wid;
+					this.dbHelper.addWord(ent);
+				}
+			}
+			this.dispatchEvent(new Event("fetchFinished", true));
+		}
+		
+		private function handleWordsForLetter(jsonResponse:String):void {
+			var entities:Object = JSON.parse(jsonResponse);
+			if (entities != null && entities.FetchWordsForLetter != null) {
+				for (var i:uint=0; i<entities.FetchWordsForLetter.length; i++) {
+					var ent:Object = entities.FetchWordsForLetter[i];
+					var cid:uint = ent.wid;
+					this.dbHelper.addWord(ent);
+				}
+			}
+			this.dispatchEvent(new Event("fetchFinished", true));
+		}
+		
 		/**
 		 * Publics
 		 **/
@@ -228,10 +260,31 @@ package utilities {
 				token.addResponder(new mx.rpc.Responder(onJSONResult, onJSONFault));
 			}
 		}
+
 		public function startSearch(searchQuery:String):void {
 			AppSettings.getInstance().logThis(null, "startSearch : searchQuery = '" + searchQuery + "'");
 			this.ServiceID = this.SERVICE_ID_SEARCH;
 			this.httpService.url = AppSettings.getInstance().webServicesURL + this.SERVICE_SEARCH + "&q=" + searchQuery;
+			this.httpService.addEventListener(ResultEvent.RESULT, serviceResult);
+			this.httpService.addEventListener(FaultEvent.FAULT, serviceError);
+			var token:AsyncToken = this.httpService.send();
+			token.addResponder(new mx.rpc.Responder(onJSONResult, onJSONFault));
+		}
+		
+		public function getWordsForNest(nid:uint):void {
+			AppSettings.getInstance().logThis(null, "getWordsForNest : nid = '" + nid + "'");
+			this.ServiceID = this.SERVICE_ID_WORDSFORNEST;
+			this.httpService.url = AppSettings.getInstance().webServicesURL + this.SERVICE_WORDSFORNEST + "&nid=" + nid;
+			this.httpService.addEventListener(ResultEvent.RESULT, serviceResult);
+			this.httpService.addEventListener(FaultEvent.FAULT, serviceError);
+			var token:AsyncToken = this.httpService.send();
+			token.addResponder(new mx.rpc.Responder(onJSONResult, onJSONFault));
+		}
+		
+		public function getWordsForLetter(letter:String):void {
+			AppSettings.getInstance().logThis(null, "getWordsForLetter : l = '" + letter + "'");
+			this.ServiceID = this.SERVICE_ID_WORDSFORLETTER;
+			this.httpService.url = AppSettings.getInstance().webServicesURL + this.SERVICE_WORDSFORLETTER + "&l=" + letter;
 			this.httpService.addEventListener(ResultEvent.RESULT, serviceResult);
 			this.httpService.addEventListener(FaultEvent.FAULT, serviceError);
 			var token:AsyncToken = this.httpService.send();

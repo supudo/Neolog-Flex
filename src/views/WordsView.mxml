@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark"
+		title="Words"
+		backgroundColor="#29435E"
+		creationComplete="words_creationCompleteHandler(event)"
+		viewActivate="words_viewActivateHandler(event)">
+	
+	<fx:Metadata>
+		[ResourceBundle("resources")]
+	</fx:Metadata> 
+	
+	<fx:Script>
+		<![CDATA[
+			import models.WordModel;
+			
+			import mx.collections.ArrayCollection;
+			import mx.events.FlexEvent;
+			
+			import spark.events.IndexChangeEvent;
+			import spark.events.ViewNavigatorEvent;
+			
+			import utilities.AppSettings;
+			import utilities.Synchronization;
+			
+			protected var _sync:Synchronization;
+
+			[Bindable]
+			private var wordsModel:WordModel;
+			
+			private var nestID:uint = 0;
+			private var letterID:uint = 0;
+			
+			protected function words_creationCompleteHandler(event:FlexEvent):void {
+				this.title = resourceManager.getString('resources','menu_Words');
+				this.spinnerLoading.visible = false;
+				this.actionBarVisible = false;
+			}
+			
+			protected function words_viewActivateHandler(event:ViewNavigatorEvent):void {
+				this.addEventListener("syncComplete", loadItems);
+				this.loadItems(null);
+			}
+			
+			public function loadItems(event:Event):void {
+				if (data != null && data.nestid != null && data.letterid != null) {
+					this.wordsModel = WordModel.getInstance();
+
+					this.nestID = data.nestid;
+					this.letterID = data.letterid;
+					
+					if (this.wordsModel.items == null)
+						this.wordsModel.items = new ArrayCollection();
+					else
+						this.wordsModel.items.removeAll();
+
+					var ents:Array;
+					if (this.nestID > 0)
+						ents = AppSettings.getInstance().dbHelper.getWordsForNest(this.nestID);
+					else
+						ents = AppSettings.getInstance().dbHelper.getWordsForLetter(AppSettings.getInstance().Letters[this.letterID]);
+
+					if (ents.length > 0) {
+						for (var i:int=0; i<ents.length; i++)
+							this.wordsModel.items.addItem(ents[i]);
+					}
+					else {
+						this._sync = new Synchronization(null);
+						this._sync.addEventListener("fetchFinished", fetchFinished);
+						if (this.nestID > 0)
+							this._sync.getWordsForNest(this.nestID);
+						else
+							this._sync.getWordsForLetter(AppSettings.getInstance().Letters[this.letterID]);
+					}
+				}
+			}
+			
+			public function fetchFinished(event:Event):void {
+				AppSettings.getInstance().logThis(null, "fetchFinished ... ");
+				this.removeEventListener("fetchFinished", fetchFinished);
+				this.loadWords();
+			}
+
+			protected function listWords_changeHandler(event:IndexChangeEvent):void {
+				navigator.pushView(WordDetailsView, this.listWords.selectedItem);
+			}
+
+			protected function loadWords():void {
+				if (this.wordsModel.items == null)
+					this.wordsModel.items = new ArrayCollection();
+				else
+					this.wordsModel.items.removeAll();
+				
+				var ents:Array;
+				if (this.nestID > 0)
+					ents = AppSettings.getInstance().dbHelper.getWordsForNest(this.nestID);
+				else
+					ents = AppSettings.getInstance().dbHelper.getWordsForLetter(AppSettings.getInstance().Letters[this.letterID]);
+
+				for (var i:int=0; i<ents.length; i++)
+					this.wordsModel.items.addItem(ents[i]);
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	
+	<s:BusyIndicator id="spinnerLoading" width="50" height="50" symbolColor="#FFFFFF"/>
+	
+	<s:List id="listWords" width="100%" height="100%" dataProvider="{wordsModel.items}"
+			alternatingItemColors="[0xF6F6F6, 0xFFFFFF]"
+			change="listWords_changeHandler(event)" labelField="word" textAlign="center"
+			contentBackgroundColor="#29435E"/>
+	
+</s:View>

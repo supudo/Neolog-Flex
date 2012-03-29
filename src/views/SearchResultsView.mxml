@@ -3,7 +3,8 @@
 		xmlns:s="library://ns.adobe.com/flex/spark"
 		title="Search results"
 		backgroundColor="#29435E"
-		creationComplete="searchResults_creationCompleteHandler(event)">
+		creationComplete="searchResults_creationCompleteHandler(event)"
+		viewActivate="searchResults_viewActivateHandler(event)">
 	
 	<fx:Metadata>
 		[ResourceBundle("resources")]
@@ -11,10 +12,50 @@
 	
 	<fx:Script>
 		<![CDATA[
+			import models.WordModel;
+			
+			import mx.collections.ArrayCollection;
 			import mx.events.FlexEvent;
+			
+			import spark.events.IndexChangeEvent;
+			import spark.events.ViewNavigatorEvent;
+			
+			import utilities.AppSettings;
+			
+			[Bindable]
+			private var wordsModel:WordModel;
+
+			private var searchQuery:String = "";
+			
+			override public function createReturnObject():Object {
+				var returnedObject:Object = new Object();
+				returnedObject.searchQuery = this.searchQuery;
+				return returnedObject;
+			}
 			
 			protected function searchResults_creationCompleteHandler(event:FlexEvent):void {
 				this.title = resourceManager.getString('resources','menu_SearchResults');
+			}
+			
+			protected function searchResults_viewActivateHandler(event:ViewNavigatorEvent):void {
+				this.addEventListener("syncComplete", loadItems);
+				this.loadItems(null);
+			}
+			
+			public function loadItems(event:Event):void {
+				if (data != null && data.words != null) {
+					this.wordsModel = WordModel.getInstance();
+					
+					this.searchQuery = data.searchQuery;
+					
+					this.wordsModel.items = new ArrayCollection();
+					for (var i:int=0; i<data.words.length; i++)
+						this.wordsModel.items.addItem(data.words[i]);
+				}
+			}
+			
+			protected function listWords_changeHandler(event:IndexChangeEvent):void {
+				navigator.pushView(WordDetailsView, this.listSearchResults.selectedItem);
 			}
 			
 		]]>
@@ -23,5 +64,10 @@
 	<fx:Declarations>
 		<!-- Place non-visual elements (e.g., services, value objects) here -->
 	</fx:Declarations>
+	
+	<s:List id="listSearchResults" width="100%" height="100%" dataProvider="{wordsModel.items}"
+			alternatingItemColors="[0xF6F6F6, 0xFFFFFF]"
+			change="listWords_changeHandler(event)" labelField="word" textAlign="center"
+			contentBackgroundColor="#29435E"/>
 	
 </s:View>

@@ -48,7 +48,10 @@
 			}
 			
 			protected function listLetters_changeHandler(event:IndexChangeEvent):void {
-				AppSettings.getInstance().CurrentLetter = this.listLetters.selectedItem.letter;
+				var obj:Object = new Object();
+				obj.nestid = 0;
+				obj.letterid = this.listLetters.selectedIndex;
+				navigator.pushView(WordsView, obj);
 			}
 			
 		]]>
@@ -60,7 +63,7 @@
 	
 	<s:List id="listLetters" width="100%" height="100%" dataProvider="{letterModel.items}"
 			alternatingItemColors="[0xF6F6F6, 0xFFFFFF]"
-			change="listLetters_changeHandler(event)" labelField="letter" textAlign="center">
-	</s:List>
+			change="listLetters_changeHandler(event)" labelField="letter" textAlign="center"
+			contentBackgroundColor="#29435E" />
 	
 </s:View>

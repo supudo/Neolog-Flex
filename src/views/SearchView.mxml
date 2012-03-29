@@ -65,11 +65,11 @@
 			}
 			
 			private function doSearch():void {
-				var wrds:Array = AppSettings.getInstance().dbHelper.searchWords(this.searchQuery);
-				if (wrds != null) {
-					AppSettings.getInstance().logThis(null, "found = " + wrds.length);
+				var words:Array = AppSettings.getInstance().dbHelper.searchWords(this.searchQuery);
+				if (words != null) {
+					AppSettings.getInstance().logThis(null, "found = " + words.length);
 					var o:Object = new Object();
-					o.wrds = wrds;
+					o.words = words;
 					o.searchQuery = this.searchQuery;
 					navigator.pushView(SearchResultsView, o);
 				}
