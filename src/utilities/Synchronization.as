@@ -142,6 +142,10 @@ package utilities {
 					this.handleNests(jsonResponse);
 					break;
 				}
+				case this.SERVICE_ID_SENDWORD: {
+					this.handleSendWord(jsonResponse);
+					break;
+				}
 				default: {
 					break;
 				}
@@ -178,9 +182,36 @@ package utilities {
 			this.syncCompleted();
 		}
 		
+		private function handleSendWord(jsonResponse:String):void {
+			var returnObject:Object = new Object();
+			var response:Object = JSON.parse(jsonResponse);
+			if (response != null && response.SendWord != null) {
+				if (response.SendWord.result == "true")
+					returnObject.postResponse = "true";
+				else
+					returnObject.postResponse = response.SendWord.result;
+			}
+			this.dispatchEvent(new DataEvent("sendWordFinished", true, false, returnObject));
+		}
+		
 		/**
 		 * Publics
 		 **/
+		public function sendWord(obj:Object):void {
+			if (obj != null) {
+				AppSettings.getInstance().logThis(null, "obj...");
+				this.ServiceID = this.SERVICE_ID_SENDWORD;
+				this.httpService.url = AppSettings.getInstance().webServicesURL + this.SERVICE_SENDWORD;
+				this.httpService.addEventListener(ResultEvent.RESULT, serviceResult);
+				this.httpService.addEventListener(FaultEvent.FAULT, serviceError);
+				this.httpService.method = "POST";
+				this.httpService.useProxy = false;
+				this.httpService.contentType = HTTPService.CONTENT_TYPE_FORM;
+				this.httpService.showBusyCursor = true;
+				var token:AsyncToken = this.httpService.send({jsonobj:JSON.stringify(obj)});
+				token.addResponder(new mx.rpc.Responder(onJSONResult, onJSONFault));
+			}
+		}
 
 	}
 

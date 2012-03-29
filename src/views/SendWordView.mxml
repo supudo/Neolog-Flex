@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <s:View xmlns:fx="http://ns.adobe.com/mxml/2009" 
 		xmlns:s="library://ns.adobe.com/flex/spark"
-		xmlns:controls="controls.*"
 		backgroundColor="#29435E"
 		title="Send Word"
-		creationComplete="sendWord_creationCompleteHandler(event)">
+		viewActivate="sendWord_viewActivateHandler(event)">
 	
 	<fx:Metadata>
 		[ResourceBundle("resources")]
@@ -12,17 +11,154 @@
 	
 	<fx:Script>
 		<![CDATA[
-			import mx.events.FlexEvent;
+			import events.DataEvent;
 			
-			protected function sendWord_creationCompleteHandler(event:FlexEvent):void {
+			import mx.collections.ArrayCollection;
+			
+			import spark.events.IndexChangeEvent;
+			import spark.events.PopUpEvent;
+			import spark.events.ViewNavigatorEvent;
+			
+			import utilities.AppSettings;
+			import utilities.Funcs;
+			import utilities.Synchronization;
+			
+			protected var _sync:Synchronization;
+
+			[Bindable]
+			private var itemsNest:ArrayCollection;
+			
+			protected function sendWord_viewActivateHandler(event:ViewNavigatorEvent):void {
 				this.title = resourceManager.getString('resources','menu_SendWord');
+				
+				this.btnPost.label = resourceManager.getString('resources','post_Button'); 
+				
+				this.lblName.text = resourceManager.getString('resources','post_name');
+				this.lblEmail.text = resourceManager.getString('resources','post_email');
+				this.lblURL.text = resourceManager.getString('resources','post_url');
+				this.lblWord.text = resourceManager.getString('resources','post_word');
+				this.lblDescription.text = resourceManager.getString('resources','post_description');
+				this.lblExamples.text = resourceManager.getString('resources','post_examples');
+				this.lblEthimology.text = resourceManager.getString('resources','post_ethimology');
+				
+				this.itemsNest = new ArrayCollection();
+				
+				var zeroObj:Object = new Object();
+				zeroObj.nid = 0;
+				zeroObj.nest = resourceManager.getString('resources','post_nest');
+				this.itemsNest.addItemAt(zeroObj, 0);
+				var ents:Array = AppSettings.getInstance().dbHelper.getNests();
+				for (var i:int=0; i<ents.length; i++)
+					this.itemsNest.addItem(ents[i]);
+			}
+			
+			protected function btnPost_clickHandler(event:MouseEvent):void {
+				var obj:Object = {};
+				obj.nest = this.spNests.selectedItem.nid;
+				obj.added_by = this.txtName.text;
+				obj.added_by_email = this.txtEmail.text;
+				obj.added_by_url = this.txtURL.text;
+				obj.word = this.txtWord.text;
+				obj.word_desc = this.txtDescription.text;
+				obj.example = this.txtExamples.text;
+				obj.ethimology = this.txtEthimology.text;
+				
+				var f:Funcs = new Funcs();
+				
+				var errorMessage:String = "";
+				if (obj.nest == 0 || obj.word == "" || obj.word_desc == "" || obj.example == "")
+					errorMessage = resourceManager.getString('resources','post_error');
+				
+				if (errorMessage != "") {
+					var _alert:AlertMsgPost = new AlertMsgPost();
+					_alert.open(this, true);
+					_alert.alertPostTitleWindow.title = resourceManager.getString('resources','post_title');
+					_alert.alertPostText.text = errorMessage;
+					_alert.move(((this.width / 2) - (_alert.width / 2)), ((this.height / 2) - (_alert.height / 2)));
+				}
+				else {
+					this._sync = new Synchronization(null);
+					this._sync.addEventListener("sendWordFinished", sendWordFinished);
+					this._sync.dbHelper = AppSettings.getInstance().dbHelper;
+					this._sync.sendWord(obj);
+				}
+			}
+			
+			public function sendWordFinished(event:events.DataEvent):void {
+				AppSettings.getInstance().logThis(null, "Send word finished ... ");
+				
+				var postResponse:String = resourceManager.getString('resources','post_thanks');
+				if (event.data.postResponse == "true") {
+					this.removeEventListener("sendWordFinished", sendWordFinished);
+					this.spNests.selectedIndex == 0;
+					this.txtName.text = "";
+					this.txtEmail.text = "";
+					this.txtURL.text = "";
+					this.txtWord.text = "";
+					this.txtDescription.text = "";
+					this.txtExamples.text = "";
+					this.txtEthimology.text = "";
+				}
+				else
+					postResponse = resourceManager.getString('resources', event.data.postResponse);
+				
+				var _alert:AlertMsgPost = new AlertMsgPost();
+				_alert.open(this, true);
+				_alert.alertPostTitleWindow.title = resourceManager.getString('resources','post_title');
+				_alert.alertPostText.text = postResponse;
+				_alert.move(((this.width / 2) - (_alert.width / 2)), ((this.height / 2) - (_alert.height / 2)));
 			}
 			
 		]]>
 	</fx:Script>
 	
 	<fx:Declarations>
-		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<fx:Component className="AlertMsgPost">
+			<s:SkinnablePopUpContainer x="0" y="0">
+				<s:TitleWindow id="alertPostTitleWindow" title="" close="close()" styleName="Alert">
+					<s:VGroup horizontalAlign="center" verticalAlign="middle" paddingTop="8" paddingBottom="8" paddingLeft="8" paddingRight="8" gap="5" width="100%">
+						<s:Label id="alertPostText" text="No results!"/>
+						<s:Button id="alertPostOK" label="OK" click="close()"/>
+					</s:VGroup>
+				</s:TitleWindow>
+			</s:SkinnablePopUpContainer>
+		</fx:Component>
 	</fx:Declarations>
+	
+	<s:Scroller height="100%" width="100%">
+		<s:VGroup gap="10" paddingBottom="4" paddingTop="4" paddingLeft="4" paddingRight="4" width="100%" height="100%">
+			<s:Spacer height="10" />
+			<s:HGroup horizontalAlign="center" width="100%">
+				<s:SpinnerListContainer width="280">
+					<s:SpinnerList id="spNests" width="100%" labelField="nest" dataProvider="{itemsNest}" />
+				</s:SpinnerListContainer>
+			</s:HGroup>
+			<s:Spacer height="10" />
+			<s:Label id="lblName" text="Name..." color="#FFFFFF" />
+			<s:TextInput id="txtName" width="100%" />
+			<s:Spacer height="10" />
+			<s:Label id="lblEmail" text="Email..." color="#FFFFFF" />
+			<s:TextInput id="txtEmail" width="100%" />
+			<s:Spacer height="10" />
+			<s:Label id="lblURL" text="URL..." color="#FFFFFF" />
+			<s:TextInput id="txtURL" width="100%" />
+			<s:Spacer height="10" />
+			<s:Label id="lblWord" text="Word..." color="#FFFFFF" />
+			<s:TextInput id="txtWord" width="100%" />
+			<s:Spacer height="10" />
+			<s:Label id="lblDescription" text="Description..." color="#FFFFFF" />
+			<s:TextArea id="txtDescription" width="100%" height="115" />
+			<s:Spacer height="10" />
+			<s:Label id="lblExamples" text="Examples..." color="#FFFFFF" />
+			<s:TextArea id="txtExamples" width="100%" height="115" />
+			<s:Spacer height="10" />
+			<s:Label id="lblEthimology" text="Ethimology..." color="#FFFFFF" />
+			<s:TextArea id="txtEthimology" width="100%" height="115" />
+			<s:Spacer height="10" />
+			<s:HGroup horizontalAlign="center" width="100%">
+				<s:Button id="btnPost" label="Gaz..." skinClass="skins.GazButtonSkin" click="btnPost_clickHandler(event)" />
+			</s:HGroup>
+		</s:VGroup>
+	</s:Scroller>
 	
 </s:View>

@@ -58,7 +58,7 @@
 	</fx:Declarations>
 	
 	<s:List id="listLetters" width="100%" height="100%" dataProvider="{letterModel.items}"
-			alternatingItemColors="[0xE3E3E3, 0xEBEBEC]"
+			alternatingItemColors="[0xF6F6F6, 0xFFFFFF]"
 			change="listLetters_changeHandler(event)" labelField="letter" textAlign="center">
 	</s:List>
 	

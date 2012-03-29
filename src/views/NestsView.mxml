@@ -72,7 +72,7 @@
 	</fx:Declarations>
 	
 	<s:List id="listNests" width="100%" height="100%" dataProvider="{nestsModel.items}"
-			alternatingItemColors="[0xE3E3E3, 0xEBEBEC]"
+			alternatingItemColors="[0xF6F6F6, 0xFFFFFF]"
 			change="listNests_changeHandler(event)" labelField="nest" textAlign="center">
 	</s:List>
 	
