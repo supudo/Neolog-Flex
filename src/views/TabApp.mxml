@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark"
+		title="TabApp"
+		creationComplete="tabapp_creationCompleteHandler(event)"
+		backgroundColor="#29435E">
+	
+	<fx:Metadata>
+		[ResourceBundle("resources")]
+	</fx:Metadata>
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.events.FlexEvent;
+			
+			import spark.events.IndexChangeEvent;
+			import spark.events.ViewNavigatorEvent;
+			
+			import utilities.AppSettings;
+			
+			public var nlApp:Neolog;
+			
+			protected function tabapp_creationCompleteHandler(event:FlexEvent):void {
+				this.addEventListener("syncComplete", reloadItems);
+				this.tbNL.label = resourceManager.getString('resources','menu_NestsAndLetters');
+				this.tbSearch.label = resourceManager.getString('resources','menu_Search');
+				this.tbSendWord.label = resourceManager.getString('resources','menu_SendWord');
+				this.tbSettings.label = resourceManager.getString('resources','menu_Settings');
+				this.tbAbout.label = resourceManager.getString('resources','menu_About');
+				this.tabApp.visible = true;
+				this.tabApp.selectedIndex = 0;
+			}
+			
+			protected function reloadItems(event:Event):void {
+				this.removeEventListener("syncComplete", reloadItems);
+				this.tbNL.activeView.dispatchEvent(new Event("syncComplete", true));
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	
+	<s:TabbedViewNavigator id="tabApp" width="100%" height="100%">
+		<s:ViewNavigator id="tbNL" icon="@Embed('assets/images/tabs/tbwords.png')" label="Nests" width="100%" height="100%" firstView="views.NestsAndLettersView"/>
+		<s:ViewNavigator id="tbSearch" icon="@Embed('assets/images/tabs/tbsearch.png')" label="Search" width="100%" height="100%" firstView="views.SearchView"/>
+		<s:ViewNavigator id="tbSendWord" icon="@Embed('assets/images/tabs/tbsendword.png')" label="Send Word" width="100%" height="100%" firstView="views.SendWordView"/>
+		<s:ViewNavigator id="tbSettings" icon="@Embed('assets/images/tabs/tbsettings.png')" label="Settings" width="100%" height="100%" firstView="views.SettingsView"/>
+		<s:ViewNavigator id="tbAbout" icon="@Embed('assets/images/tabs/tbabout.png')" label="About" width="100%" height="100%" firstView="views.AboutView"/>
+	</s:TabbedViewNavigator>
+	
+</s:View>

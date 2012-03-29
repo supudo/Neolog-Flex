@@ -131,9 +131,11 @@ package database {
 			sqlWrapper.statement.execute();
 			sqlWrapper = this.sqlStatementFactory.newInstanceRT(this.dbSchema.DELETE_TEXTCONTENT);
 			sqlWrapper.statement.execute();
-			sqlWrapper = this.sqlStatementFactory.newInstanceRT(this.dbSchema.DELETE_CATEGORIES);
+			sqlWrapper = this.sqlStatementFactory.newInstanceRT(this.dbSchema.DELETE_NESTS);
 			sqlWrapper.statement.execute();
-			sqlWrapper = this.sqlStatementFactory.newInstanceRT(this.dbSchema.DELETE_JOBOFFERS);
+			sqlWrapper = this.sqlStatementFactory.newInstanceRT(this.dbSchema.DELETE_WORDSCOMMENTS);
+			sqlWrapper.statement.execute();
+			sqlWrapper = this.sqlStatementFactory.newInstanceRT(this.dbSchema.DELETE_WORDS);
 			sqlWrapper.statement.execute();
 			AppSettings.getInstance().logThis(null, "Database wiped!");
 		}
@@ -154,29 +156,33 @@ package database {
 		private function populateSettings():void {
 			this.addSettings("stStorePrivateData", "true", false);
 			this.addSettings("stPDEmail", "", false);
-			this.addSettings("stShowCategories", "true", false);
-			this.addSettings("stOnlineSearch", "true", false);
-			this.addSettings("stInAppEmail", "false", false);
 			this.createTextContentTable();
 		}
 
 		private function createTextContentTable():void {
 			var sqlWrapper:SQLWrapper = this.sqlStatementFactory.newInstanceRT(this.dbSchema.CREATE_TABLE_TEXTCONTENT);
 			sqlWrapper.statement.execute();
-			this.createCategoriesTable();
+			this.createNestsTable();
 		}
 
-		private function createCategoriesTable():void {
-			var sqlWrapper:SQLWrapper = this.sqlStatementFactory.newInstanceRT(this.dbSchema.CREATE_TABLE_CATEGORIES);
+		private function createNestsTable():void {
+			var sqlWrapper:SQLWrapper = this.sqlStatementFactory.newInstanceRT(this.dbSchema.CREATE_TABLE_NESTS);
 			sqlWrapper.statement.execute();
-			this.createJobOffersTable();
-		}	
+			this.createWordsCommentsTable();
+		}
+		
+		private function createWordsCommentsTable():void {
+			var sqlWrapper:SQLWrapper = this.sqlStatementFactory.newInstanceRT(this.dbSchema.CREATE_TABLE_WORDSCOMMENTS);
+			sqlWrapper.statement.execute();
+			this.createWordsTable();
+		}
 
-		private function createJobOffersTable():void {
-			var sqlWrapper:SQLWrapper = this.sqlStatementFactory.newInstanceRT(this.dbSchema.CREATE_TABLE_JOBOFFERS);
+		private function createWordsTable():void {
+			var sqlWrapper:SQLWrapper = this.sqlStatementFactory.newInstanceRT(this.dbSchema.CREATE_TABLE_WORDS);
 			sqlWrapper.statement.execute();
 			this.finishedCreatingTables();
 		}
+
 		private function finishedCreatingTables():void {
 			var de:DatabaseEvent = new DatabaseEvent(DatabaseEvent.RESULT_EVENT);
 			de.data = this.dbSchema.TABLES_CREATED;
@@ -263,25 +269,25 @@ package database {
 		}
 		
 		/** ========================================================
-		 * Categories
+		 * Nests
 		 **/
-		public function addCategory(ent:Object):void {
+		public function addNest(ent:Object):void {
 			if (ent) {
-				var exists:Boolean = this.hasCategory(ent.id);
-				AppSettings.getInstance().logThis(null, "addCategory (" + (exists ? "update" : "insert") + ") ... " + ent.id);
-				var sqlWrapper:SQLWrapper = this.sqlStatementFactory.newInstanceRT(((exists) ? this.dbSchema.UPDATE_CATEGORIES : this.dbSchema.INSERT_CATEGORIES));
-				sqlWrapper.statement.parameters[":cid"] = ent.id; 
-				sqlWrapper.statement.parameters[":title"] =  ent.name;
-				sqlWrapper.statement.parameters[":offerscount"] = ent.offerscount;
+				var exists:Boolean = this.hasNest(ent.nid);
+				AppSettings.getInstance().logThis(null, "addNest (" + (exists ? "update" : "insert") + ") ... " + ent.nid);
+				var sqlWrapper:SQLWrapper = this.sqlStatementFactory.newInstanceRT(((exists) ? this.dbSchema.UPDATE_NESTS : this.dbSchema.INSERT_NESTS));
+				sqlWrapper.statement.parameters[":nid"] = ent.nid; 
+				sqlWrapper.statement.parameters[":nest"] =  ent.nest;
+				sqlWrapper.statement.parameters[":orderpos"] = ent.orderpos;
 				sqlWrapper.statement.execute();
 			}
 		}
 		
-		public function hasCategory(cid:uint):Boolean {
+		public function hasNest(nid:uint):Boolean {
 			var alreadyExisting:Boolean = false;
-			if (cid is Number) {
-				var sqlWrapper:SQLWrapper = this.sqlStatementFactory.newInstanceRT(this.dbSchema.GET_CATEGORY);
-				sqlWrapper.statement.parameters[":cid"] = cid;
+			if (nid is Number) {
+				var sqlWrapper:SQLWrapper = this.sqlStatementFactory.newInstanceRT(this.dbSchema.GET_NEST);
+				sqlWrapper.statement.parameters[":nid"] = nid;
 				sqlWrapper.statement.execute();
 				sqlWrapper.result = sqlWrapper.statement.getResult(); 
 				alreadyExisting = sqlWrapper.result.data != null && sqlWrapper.result.data.length > 0;
@@ -289,123 +295,9 @@ package database {
 			return alreadyExisting;
 		}
 		
-		public function getCategoriesAll():Array {
+		public function getNests():Array {
 			var items:Array = null;
-			var sqlWrapper:SQLWrapper = this.sqlStatementFactory.newInstanceRT(this.dbSchema.GET_CATEGORIES);
-			sqlWrapper.statement.execute();
-			sqlWrapper.result = sqlWrapper.statement.getResult();
-			if (sqlWrapper.result != null && sqlWrapper.result.data != null)
-				items = sqlWrapper.result.data;
-			return items;
-		}
-
-		public function getCategories(humanYn:Boolean):Array {
-			var items:Array = null;
-			var sqlWrapper:SQLWrapper = this.sqlStatementFactory.newInstanceRT(this.dbSchema.GET_CATEGORIES_COUNT);
-			sqlWrapper.statement.parameters[":humanyn"] = humanYn;
-			sqlWrapper.statement.execute();
-			sqlWrapper.result = sqlWrapper.statement.getResult();
-			if (sqlWrapper.result != null && sqlWrapper.result.data != null)
-				items = sqlWrapper.result.data;
-			return items;
-		}
-
-		public function getCategory(cid:uint):void {
-			if (this.dbResponder != null && cid is Number) {
-				var sqlWrapper:SQLWrapper = this.sqlStatementFactory.newInstance(this.dbResponder, this.dbSchema.GET_CATEGORY);
-				sqlWrapper.statement.parameters[":cid"] = cid;
-				sqlWrapper.statement.execute();
-			}
-		}
-		
-		/** ========================================================
-		 * Job offers
-		 **/
-		public function addJobOffers(ent:Object):void {
-			if (ent) {
-				var exists:Boolean = this.hasJobOffer(ent.id);
-				AppSettings.getInstance().logThis(null, "addJobOffers (" + (exists ? "update" : "insert") + ") ... " + ent.id);
-				var sqlWrapper:SQLWrapper = this.sqlStatementFactory.newInstanceRT(((exists) ? this.dbSchema.UPDATE_JOBOFFERS : this.dbSchema.INSERT_JOBOFFERS));
-				sqlWrapper.statement.parameters[":oid"] = ent.id; 
-				sqlWrapper.statement.parameters[":cid"] =  ent.cid;
-				sqlWrapper.statement.parameters[":title"] = ent.title;
-				sqlWrapper.statement.parameters[":categorytitle"] = ent.category;
-				sqlWrapper.statement.parameters[":email"] = ent.email;
-				sqlWrapper.statement.parameters[":freelanceyn"] = ent.fyn == 1;
-				sqlWrapper.statement.parameters[":humanyn"] = ent.hm == 1;
-				sqlWrapper.statement.parameters[":negativism"] = ent.negativism;
-				sqlWrapper.statement.parameters[":positivism"] = ent.positivism;
-				var matches : Array = ent.date.match(/(\d\d\d\d)-(\d\d)-(\d\d)/);
-				var publishDate:Date = new Date();
-				publishDate.setUTCFullYear(int(matches[1]), int(matches[2]) - 1, int(matches[3]));
-				sqlWrapper.statement.parameters[":publishdate"] = publishDate;
-				sqlWrapper.statement.parameters[":publishdatestamp"] = ent.datestamp;
-				if (!exists) {
-					sqlWrapper.statement.parameters[":readyn"] = false;
-					sqlWrapper.statement.parameters[":sentmessageyn"] = false;
-				}
-				sqlWrapper.statement.execute();
-			}
-		}
-		
-		public function hasJobOffer(oid:uint):Boolean {
-			var alreadyExisting:Boolean = false;
-			if (oid is Number) {
-				var sqlWrapper:SQLWrapper = this.sqlStatementFactory.newInstanceRT(this.dbSchema.GET_JOBOFFERS_FOR_JOBOFFER_ID);
-				sqlWrapper.statement.parameters[":oid"] = oid;
-				sqlWrapper.statement.execute();
-				sqlWrapper.result = sqlWrapper.statement.getResult(); 
-				alreadyExisting = sqlWrapper.result.data != null && sqlWrapper.result.data.length > 0;
-			}
-			return alreadyExisting;
-		}
-
-		public function getJobOffers():Array {
-			var items:Array = null;
-			var sqlWrapper:SQLWrapper = this.sqlStatementFactory.newInstanceRT(this.dbSchema.GET_JOBOFFERS);
-			sqlWrapper.statement.execute();
-			sqlWrapper.result = sqlWrapper.statement.getResult();
-			if (sqlWrapper.result != null && sqlWrapper.result.data != null)
-				items = sqlWrapper.result.data;
-			return items;
-		}
-
-		public function getJobOfferForCategory(args:Array):void {					
-			if (this.dbResponder != null && args[0] is Number) {
-				var sqlWrapper:SQLWrapper = this.sqlStatementFactory.newInstance(this.dbResponder, this.dbSchema.GET_JOBOFFERS_FOR_JOBOFFER_ID);
-				sqlWrapper.statement.parameters[":id"] = args[0];
-				sqlWrapper.statement.execute();
-			}
-		}
-		
-		public function getJobOfferForHuman(humanYn:Boolean):Array {	
-			var items:Array = null;
-			var sqlWrapper:SQLWrapper = this.sqlStatementFactory.newInstanceRT(this.dbSchema.GET_JOBOFFERS_FOR_HUMAN);
-			sqlWrapper.statement.parameters[":humanyn"] = humanYn;
-			sqlWrapper.statement.execute();
-			sqlWrapper.result = sqlWrapper.statement.getResult();
-			if (sqlWrapper.result != null && sqlWrapper.result.data != null)
-				items = sqlWrapper.result.data;
-			return items;
-		}
-		
-		public function getJobOffersComplex(humanYn:Boolean, categoryID:uint):Array {	
-			var items:Array = null;
-			var sqlWrapper:SQLWrapper = this.sqlStatementFactory.newInstanceRT(this.dbSchema.GET_JOBOFFERS_COMPLEX);
-			sqlWrapper.statement.parameters[":humanyn"] = humanYn;
-			sqlWrapper.statement.parameters[":cid"] = categoryID;
-			sqlWrapper.statement.execute();
-			sqlWrapper.result = sqlWrapper.statement.getResult();
-			if (sqlWrapper.result != null && sqlWrapper.result.data != null)
-				items = sqlWrapper.result.data;
-			return items;
-		}
-
-		public function searchJobOffers(searchQuery:String, searchFreelance:int):Array {
-			var items:Array = null;
-			var sqlWrapper:SQLWrapper = this.sqlStatementFactory.newInstanceRT(this.dbSchema.SEARCH_JOBOFFERS);
-			sqlWrapper.statement.parameters[":freelanceyn"] = searchFreelance;
-			sqlWrapper.statement.parameters[":searchq"] = "%" + searchQuery + "%";
+			var sqlWrapper:SQLWrapper = this.sqlStatementFactory.newInstanceRT(this.dbSchema.GET_NESTS_COUNT);
 			sqlWrapper.statement.execute();
 			sqlWrapper.result = sqlWrapper.statement.getResult();
 			if (sqlWrapper.result != null && sqlWrapper.result.data != null)

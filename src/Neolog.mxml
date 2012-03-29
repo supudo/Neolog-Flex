@@ -1,10 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
-<s:TabbedViewNavigatorApplication xmlns:fx="http://ns.adobe.com/mxml/2009" 
-								  xmlns:s="library://ns.adobe.com/flex/spark" applicationDPI="160">
-	<s:ViewNavigator label="Words" width="100%" height="100%" firstView="views.WordsView"/>
-	<s:ViewNavigator label="Send Word" width="100%" height="100%" firstView="views.SendWordView"/>
-	<s:ViewNavigator label="Settings" width="100%" height="100%" firstView="views.SettingsView"/>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark"
+			   xmlns:views="views.*"
+			   applicationDPI="160"
+			   creationComplete="loading_creationCompleteHandler(event)"
+			   splashScreenImage="@Embed('assets/images/logo.gif')"
+			   splashScreenScaleMode="none"
+			   splashScreenMinimumDisplayTime="2000"
+			   backgroundColor="#29435E">
+	
+	<fx:Metadata>
+		[ResourceBundle("resources")]
+	</fx:Metadata> 
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.core.FlexGlobals;
+			import mx.events.FlexEvent;
+			
+			import utilities.AppSettings;
+			
+			import views.LoadingView;
+			import views.TabApp;
+			
+			protected function loading_creationCompleteHandler(event:FlexEvent):void {
+				this.addEventListener("syncFinished", syncDone);
+			}
+			
+			public function syncDone(event:Event):void {
+				AppSettings.getInstance().loadAppSettings();
+				AppSettings.getInstance().logThis(null, "Starting app...");
+				this.tabApp.nlApp = this;
+				this.tabApp.visible = true;
+				this.tabApp.tabApp.selectedIndex = 0;
+				this.tabApp.dispatchEvent(new Event("syncComplete", true));
+			}
+			
+		]]>
+	</fx:Script>
+	
 	<fx:Declarations>
 		<!-- Place non-visual elements (e.g., services, value objects) here -->
 	</fx:Declarations>
-</s:TabbedViewNavigatorApplication>
+	
+	<views:LoadingView id="loadingView" width="100%" height="100%" />
+	<views:TabApp id="tabApp" width="100%" height="100%" visible="false" />
+	
+</s:Application>

@@ -3,8 +3,8 @@
 		xmlns:s="library://ns.adobe.com/flex/spark"
 		xmlns:controls="controls.*"
 		backgroundColor="#29435E"
-		title="Settings"
-		creationComplete="settings_creationCompleteHandler(event)">
+		title="Search"
+		creationComplete="search_creationCompleteHandler(event)">
 	
 	<fx:Metadata>
 		[ResourceBundle("resources")]
@@ -13,9 +13,9 @@
 	<fx:Script>
 		<![CDATA[
 			import mx.events.FlexEvent;
-			
-			protected function settings_creationCompleteHandler(event:FlexEvent):void {
-				this.title = resourceManager.getString('resources','menu_Settings');
+
+			protected function search_creationCompleteHandler(event:FlexEvent):void {
+				this.title = resourceManager.getString('resources','menu_Search');
 			}
 			
 		]]>

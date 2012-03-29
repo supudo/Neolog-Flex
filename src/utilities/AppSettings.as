@@ -20,9 +20,6 @@ package utilities {
 		public var webServicesURL:String = "http://www.neolog.bg/service_json.php";
 		public var stStorePrivateData:Boolean = true;
 		public var stPDEmail:String = "";
-		public var stShowCategories:Boolean = true;
-		public var stOnlineSearch:Boolean = true;
-		public var stInAppEmail:Boolean = false;
 		public var socFacebookAppID:String = "";
 		public var socFacebookAppURL:String = "";
 		public var FacebookUID:String = "";
@@ -32,7 +29,9 @@ package utilities {
 		public var TwitterCallbackURI:String = AppCallbackURI;
 		public var TwitterOAuthToken:String = "";
 		public var TwitterOAuthTokenSecret:String = "";
-		public var CurrentCategoryID:uint = 0;
+		public var CurrentNestID:uint = 0;
+		public var CurrentLetter:String = "";
+		public var Letters:Array = new Array("А", "Б", "В", "Г", "Д", "Е", "Ж", "З", "И", "Й", "К", "Л", "М", "Н", "О", "П", "Р", "С", "Т", "У", "Ф", "Х", "Ц", "Ч", "Ш", "Щ", "Ъ", "Ю", "Я", "Други..."); 
 		
 		public function logThis(ctrl:View, ... args):void {
 			var output:String = "";
