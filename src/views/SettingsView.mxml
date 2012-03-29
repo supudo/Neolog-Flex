@@ -1,28 +1,133 @@
 <?xml version="1.0" encoding="utf-8"?>
-<s:View xmlns:fx="http://ns.adobe.com/mxml/2009" 
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009"
 		xmlns:s="library://ns.adobe.com/flex/spark"
 		xmlns:controls="controls.*"
 		backgroundColor="#29435E"
 		title="Settings"
-		creationComplete="settings_creationCompleteHandler(event)">
+		viewActivate="settings_viewActivateHandler(event)">
 	
 	<fx:Metadata>
 		[ResourceBundle("resources")]
-	</fx:Metadata> 
+	</fx:Metadata>
 	
 	<fx:Script>
 		<![CDATA[
-			import mx.events.FlexEvent;
+			import spark.events.TextOperationEvent;
+			import spark.events.ViewNavigatorEvent;
 			
-			protected function settings_creationCompleteHandler(event:FlexEvent):void {
+			import utilities.AppSettings;
+			import socnet.SNFacebook;
+			import socnet.SNTwitter;
+			
+			private var engineFacebook:SNFacebook = new SNFacebook(null);
+			private var engineTwitter:SNTwitter = new SNTwitter(null);
+			
+			protected function settings_viewActivateHandler(event:ViewNavigatorEvent):void {
 				this.title = resourceManager.getString('resources','menu_Settings');
+				this.lblStorePrivateDataTitle.text = resourceManager.getString('resources','prefs_PrivateData_title');
+				this.lblStorePrivateData.text = resourceManager.getString('resources','prefs_PrivateData_remember');
+				this.lblPrivateDataEmail.text = resourceManager.getString('resources','prefs_PrivateData_email');
+				this.lblOnlineSearch.text = resourceManager.getString('resources','prefs_OnlineSearch');
+				this.btnSave.label = resourceManager.getString('resources','prefs_save');
+				
+				this.chkStorePrivateData.selected = AppSettings.getInstance().stStorePrivateData;
+				this.txtPDEmail.text = AppSettings.getInstance().stPDEmail;
+				this.chkOnlineSearch.selected = AppSettings.getInstance().stOnlineSearch;
+				
+				this.snLogoutFacebook.label = resourceManager.getString('resources','share_Facebook_Logout');
+				this.snLogoutTwitter.label = resourceManager.getString('resources','share_Twitter_Logout');
+				
+				///~ API issue : http://code.google.com/p/facebook-actionscript-api/issues/detail?id=297
+				var snf:Boolean = false;//this.engineFacebook.IsLoggedIn();
+				var snt:Boolean = this.engineTwitter.IsLoggedIn();
+				if (snf || snt)
+					this.grpSocNets.visible = true;
+				this.snLogoutFacebook.visible = snf;
+				this.snLogoutTwitter.visible = snt;
 			}
 			
+			protected function chkStorePrivateData_changeHandler(event:Event):void {
+				AppSettings.getInstance().stStorePrivateData = this.chkStorePrivateData.selected;
+			}
+			
+			protected function txtPDEmail_changeHandler(event:TextOperationEvent):void {
+				AppSettings.getInstance().stPDEmail = this.txtPDEmail.text;
+			}
+			
+			protected function chkOnlineSearch_changeHandler(event:Event):void {
+				AppSettings.getInstance().stOnlineSearch = this.chkOnlineSearch.selected;
+			}
+			
+			protected function btnSave_clickHandler(event:MouseEvent):void {
+				AppSettings.getInstance().saveAppSettings();
+			}
+			
+			protected function btnLFB_clickHandler(event:MouseEvent):void {
+				this.engineFacebook.Logout();
+				this.snLogoutFacebook.visible = false;
+				if (!this.snLogoutFacebook.visible && !this.snLogoutTwitter.visible)
+					this.grpSocNets.visible = false;
+			}
+			
+			protected function btnLTW_clickHandler(event:MouseEvent):void {
+				this.engineTwitter.Logout();
+				this.snLogoutTwitter.visible = false;
+				if (!this.snLogoutFacebook.visible && !this.snLogoutTwitter.visible)
+					this.grpSocNets.visible = false;
+			}
 		]]>
 	</fx:Script>
 	
 	<fx:Declarations>
 		<!-- Place non-visual elements (e.g., services, value objects) here -->
 	</fx:Declarations>
+	
+	<fx:Style>
+		.boldTitle { fontWeight: bold; }
+	</fx:Style>
+	
+	<s:Scroller height="100%" width="100%">
+		<s:VGroup gap="10" paddingBottom="4" paddingTop="4" paddingLeft="4" paddingRight="4" width="100%" height="100%">
+			<s:VGroup verticalAlign="middle" width="100%">
+				<s:Label id="lblStorePrivateDataTitle" text="Store private data..." styleName="boldTitle" color="#FFFFFF" />
+				<s:Spacer height="4" />
+				<s:HGroup verticalAlign="middle">
+					<s:ToggleSwitch id="chkStorePrivateData" skinClass="skins.ToggleYesNo" change="chkStorePrivateData_changeHandler(event)" />
+					<s:Label id="lblStorePrivateData" text="Remember..." color="#FFFFFF" />
+				</s:HGroup>
+				<s:Spacer height="6" />
+				<s:VGroup>
+					<s:Label id="lblPrivateDataEmail" text="Private data email..." width="100%" color="#FFFFFF" />
+					<s:Spacer height="4" />
+					<s:TextInput id="txtPDEmail" change="txtPDEmail_changeHandler(event)" />
+				</s:VGroup>
+			</s:VGroup>
+			<s:Spacer height="10" />
+			<s:Line width="100%">
+				<s:stroke>
+					<s:SolidColorStroke color="#FFFFFF" weight="1" caps="square"/>
+				</s:stroke>
+			</s:Line>
+			<s:HGroup verticalAlign="middle">
+				<s:ToggleSwitch id="chkOnlineSearch" skinClass="skins.ToggleYesNo" change="chkOnlineSearch_changeHandler(event)" />
+				<s:Label id="lblOnlineSearch" text="Online search..." color="#FFFFFF" />
+			</s:HGroup>
+			<s:Spacer height="10" />
+			<s:Button id="btnSave" label="Save..." skinClass="skins.GazButtonSkin" click="btnSave_clickHandler(event)" />
+			<s:VGroup id="grpSocNets" visible="false" width="100%">
+				<s:Spacer height="10" />
+				<s:Line width="100%">
+					<s:stroke>
+						<s:SolidColorStroke color="#FFFFFF" weight="1" caps="square"/>
+					</s:stroke>
+				</s:Line>
+				<s:HGroup width="100%" horizontalAlign="left">
+					<s:Button id="snLogoutTwitter" label="Twitter Logout" width="100%" click="btnLTW_clickHandler(event)" />
+					<s:Spacer height="10" />
+					<s:Button id="snLogoutFacebook" label="Facebook Logout" width="100%" click="btnLFB_clickHandler(event)" />
+				</s:HGroup>
+			</s:VGroup>
+		</s:VGroup>
+	</s:Scroller>
 	
 </s:View>

@@ -5,7 +5,7 @@ package skins {
 	public class GazButtonSkin extends ButtonSkin {
 		
 		[Bindable]
-		[Embed(source="../assets/images/gaz.gif")]
+		[Embed(source="../assets/images/gaz.png")]
 		private var boomImage:Class;
 
 		public function GazButtonSkin() {

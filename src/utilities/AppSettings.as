@@ -20,6 +20,7 @@ package utilities {
 		public var webServicesURL:String = "http://www.neolog.bg/service_json.php";
 		public var stStorePrivateData:Boolean = true;
 		public var stPDEmail:String = "";
+		public var stOnlineSearch:Boolean = true;
 		public var socFacebookAppID:String = "";
 		public var socFacebookAppURL:String = "";
 		public var FacebookUID:String = "";
@@ -58,6 +59,10 @@ package utilities {
 						AppSettings.getInstance().stPDEmail = setts[i].svalue;
 						break;
 					}
+					case "stOnlineSearch": {
+						AppSettings.getInstance().stOnlineSearch = setts[i].svalue == "true";
+						break;
+					}
 					default: {
 						break;
 					}
@@ -73,6 +78,7 @@ package utilities {
 			
 			this.dbHelper.addSettings("stStorePrivateData", AppSettings.getInstance().stStorePrivateData.toString(), true);
 			this.dbHelper.addSettings("stPDEmail", AppSettings.getInstance().stPDEmail, true);
+			this.dbHelper.addSettings("stOnlineSearch", AppSettings.getInstance().stOnlineSearch.toString(), true);
 		}
 	}
 }
