@@ -3,7 +3,6 @@
 		xmlns:s="library://ns.adobe.com/flex/spark"
 		backgroundColor="#29435E"
 		title="Send comment"
-		tabBarVisible="false"
 		viewActivate="sendComment_viewActivateHandler(event)">
 	
 	<fx:Metadata>
@@ -33,6 +32,9 @@
 				this.lblName.text = resourceManager.getString('resources','post_name');
 				this.lblComment.text = resourceManager.getString('resources','post_comment');
 				if (data != null) {
+					if (this.parentDocument.className == "NestsAndLettersView")
+						this.tabBarVisible = false;
+
 					this.wid = data.wid;
 					this.word = data.word;
 					this.title = resourceManager.getString('resources','comms_sendcomments') + " - " + this.word;
@@ -91,6 +93,10 @@
 				navigator.popView();
 			}
 			
+			protected function btnBack_clickHandler(event:MouseEvent):void {
+				navigator.popView();
+			}
+			
 		]]>
 	</fx:Script>
 	
@@ -119,6 +125,10 @@
 			</s:SkinnablePopUpContainer>
 		</fx:Component>
 	</fx:Declarations>
+	
+	<s:navigationContent>
+		<s:Button icon="@Embed('assets/images/action-back.png')" click="btnBack_clickHandler(event)" />
+	</s:navigationContent>
 	
 	<s:VGroup gap="10" paddingBottom="4" paddingTop="4" paddingLeft="4" paddingRight="4" width="100%" height="100%">
 		<s:Spacer height="10" />

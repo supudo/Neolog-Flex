@@ -54,7 +54,8 @@
 				this.lblExamples.text = resourceManager.getString('resources','examples');
 				this.lblEthimology.text = resourceManager.getString('resources','ethimology');
 				if (data != null) {
-					this.tabBarVisible = false;
+					if (this.parentDocument.className == "NestsAndLettersView")
+						this.tabBarVisible = false;
 					this.actionBarVisible = true;
 					this.currentWord = data.word; 
 					
@@ -164,7 +165,7 @@
 			}
 			
 			protected function btnComments_clickHandler(event:MouseEvent):void {
-				navigator.pushView(WordsCommentsView, {wid: this.currentWord.wid});
+				navigator.pushView(WordsCommentsView, {wid: this.currentWord.wid, word: this.currentWord.word});
 			}
 			
 			protected function btnSendComment_clickHandler(event:MouseEvent):void {

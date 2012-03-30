@@ -2,7 +2,6 @@
 <s:View xmlns:fx="http://ns.adobe.com/mxml/2009" 
 		xmlns:s="library://ns.adobe.com/flex/spark"
 		title="Words comments"
-		actionBarVisible="false"
 		viewActivate="wordsComments_viewActivateHandler(event)"
 		backgroundColor="#29435E">
 	
@@ -34,6 +33,7 @@
 			[Bindable]
 			private var commentsModel:CommentModel;
 			private var wid:uint = 0;
+			private var word:String = "";
 			private var loadingIndicator:LoadingPopup = new LoadingPopup();
 			
 			protected function wordsComments_viewActivateHandler(event:ViewNavigatorEvent):void {
@@ -43,12 +43,17 @@
 			
 			public function loadItems(event:Event):void {
 				if (data != null && data.wid != null) {
+					if (this.parentDocument.className == "NestsAndLettersView")
+						this.tabBarVisible = false;
+
 					PopUpManager.addPopUp(this.loadingIndicator, this, false);
 					PopUpManager.centerPopUp(this.loadingIndicator);
 
 					this.commentsModel = CommentModel.getInstance();
 					
 					this.wid = data.wid;
+					this.word = data.word;
+					this.title = resourceManager.getString('resources','comms_comments') + " - " + this.word;
 					
 					if (this.commentsModel.items == null)
 						this.commentsModel.items = new ArrayCollection();
@@ -85,13 +90,23 @@
 				
 				var ents:Array = AppSettings.getInstance().dbHelper.getCommentsForWord(this.wid);
 				
-				for (var i:int=0; i<ents.length; i++)
-					this.commentsModel.items.addItem(ents[i]);
+				if (ents != null && ents.length > 0) {
+					for (var i:int=0; i<ents.length; i++)
+						this.commentsModel.items.addItem(ents[i]);
+				}
 				PopUpManager.removePopUp(this.loadingIndicator);
+			}
+			
+			protected function btnBack_clickHandler(event:MouseEvent):void {
+				navigator.popView();
 			}
 			
 		]]>
 	</fx:Script>
+	
+	<s:navigationContent>
+		<s:Button icon="@Embed('assets/images/action-back.png')" click="btnBack_clickHandler(event)" />
+	</s:navigationContent>
 	
 	<fx:Declarations>
 		<!-- Place non-visual elements (e.g., services, value objects) here -->
