@@ -380,6 +380,50 @@ package database {
 		}
 		
 		/** ========================================================
+		 * Comments
+		 **/
+		public function addComment(ent:Object):void {
+			if (ent) {
+				var exists:Boolean = this.hasComment(ent.commentid);
+				AppSettings.getInstance().logThis(null, "addComment (" + (exists ? "update" : "insert") + ") ... " + ent.commentid);
+				var sqlWrapper:SQLWrapper = this.sqlStatementFactory.newInstanceRT(((exists) ? this.dbSchema.UPDATE_WORDSCOMMENTS : this.dbSchema.INSERT_WORDSCOMMENTS));
+				sqlWrapper.statement.parameters[":commentid"] = ent.commentid; 
+				sqlWrapper.statement.parameters[":wid"] =  ent.wordid;
+				sqlWrapper.statement.parameters[":author"] = ent.author;
+				sqlWrapper.statement.parameters[":comment"] = ent.comment;
+				sqlWrapper.statement.parameters[":commentdatestamp"] = ent.createddatestamp;
+				var matches : Array = ent.createddate.match(/(\d\d\d\d)-(\d\d)-(\d\d)/);
+				var createddate:Date = new Date();
+				createddate.setUTCFullYear(int(matches[1]), int(matches[2]) - 1, int(matches[3]));
+				sqlWrapper.statement.parameters[":commentdate"] = createddate;
+				sqlWrapper.statement.execute();
+			}
+		}
+		
+		public function hasComment(cid:uint):Boolean {
+			var alreadyExisting:Boolean = false;
+			if (cid is Number) {
+				var sqlWrapper:SQLWrapper = this.sqlStatementFactory.newInstanceRT(this.dbSchema.GET_COMMENT);
+				sqlWrapper.statement.parameters[":commentid"] = cid;
+				sqlWrapper.statement.execute();
+				sqlWrapper.result = sqlWrapper.statement.getResult(); 
+				alreadyExisting = sqlWrapper.result.data != null && sqlWrapper.result.data.length > 0;
+			}
+			return alreadyExisting;
+		}
+		
+		public function getCommentsForWord(wid:uint):Array {
+			var items:Array = null;
+			var sqlWrapper:SQLWrapper = this.sqlStatementFactory.newInstanceRT(this.dbSchema.GET_COMMENTS);
+			sqlWrapper.statement.parameters[":wid"] = wid;
+			sqlWrapper.statement.execute();
+			sqlWrapper.result = sqlWrapper.statement.getResult();
+			if (sqlWrapper.result != null && sqlWrapper.result.data != null)
+				items = sqlWrapper.result.data;
+			return items;
+		}
+		
+		/** ========================================================
 		 * Gets the last inserted rowid, according to the function last_insert_rowid() in SQLite
 		 * 		 
 		 * @param args Array [responder:DatabaseRespodner]

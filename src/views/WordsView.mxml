@@ -2,8 +2,8 @@
 <s:View xmlns:fx="http://ns.adobe.com/mxml/2009" 
 		xmlns:s="library://ns.adobe.com/flex/spark"
 		title="Words"
+		actionBarVisible="false"
 		backgroundColor="#29435E"
-		creationComplete="words_creationCompleteHandler(event)"
 		viewActivate="words_viewActivateHandler(event)">
 	
 	<fx:Metadata>
@@ -12,10 +12,12 @@
 	
 	<fx:Script>
 		<![CDATA[
+			import controls.LoadingPopup;
+			
 			import models.WordModel;
 			
 			import mx.collections.ArrayCollection;
-			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
 			
 			import spark.events.IndexChangeEvent;
 			import spark.events.ViewNavigatorEvent;
@@ -30,19 +32,18 @@
 			
 			private var nestID:uint = 0;
 			private var letterID:uint = 0;
-			
-			protected function words_creationCompleteHandler(event:FlexEvent):void {
-				this.title = resourceManager.getString('resources','menu_Words');
-				this.actionBarVisible = false;
-			}
+			private var loadingIndicator:LoadingPopup = new LoadingPopup();
 			
 			protected function words_viewActivateHandler(event:ViewNavigatorEvent):void {
-				this.addEventListener("syncComplete", loadItems);
+				this.title = resourceManager.getString('resources','menu_Words');
 				this.loadItems(null);
 			}
 			
 			public function loadItems(event:Event):void {
 				if (data != null && data.nestid != null && data.letterid != null) {
+					PopUpManager.addPopUp(this.loadingIndicator, this, false);
+					PopUpManager.centerPopUp(this.loadingIndicator);
+
 					this.wordsModel = WordModel.getInstance();
 
 					this.nestID = data.nestid;
@@ -59,13 +60,15 @@
 					else
 						ents = AppSettings.getInstance().dbHelper.getWordsForLetter(AppSettings.getInstance().Letters[this.letterID]);
 
-					if (ents.length > 0) {
+					if (ents != null && ents.length > 0) {
 						for (var i:int=0; i<ents.length; i++)
 							this.wordsModel.items.addItem(ents[i]);
+						PopUpManager.removePopUp(this.loadingIndicator);
 					}
 					else {
 						this._sync = new Synchronization(null);
-						this._sync.addEventListener("fetchFinished", fetchFinished);
+						this._sync.dbHelper = AppSettings.getInstance().dbHelper;
+						this._sync.addEventListener("fetchWordsFinished", fetchWordsFinished);
 						if (this.nestID > 0)
 							this._sync.getWordsForNest(this.nestID);
 						else
@@ -74,9 +77,9 @@
 				}
 			}
 			
-			public function fetchFinished(event:Event):void {
-				AppSettings.getInstance().logThis(null, "fetchFinished ... ");
-				this.removeEventListener("fetchFinished", fetchFinished);
+			public function fetchWordsFinished(event:Event):void {
+				AppSettings.getInstance().logThis(null, "fetchWordsFinished ... ");
+				this.removeEventListener("fetchWordsFinished", fetchWordsFinished);
 				this.loadWords();
 			}
 
@@ -98,6 +101,7 @@
 
 				for (var i:int=0; i<ents.length; i++)
 					this.wordsModel.items.addItem(ents[i]);
+				PopUpManager.removePopUp(this.loadingIndicator);
 			}
 			
 		]]>
@@ -110,6 +114,7 @@
 	<s:List id="listWords" width="100%" height="100%" dataProvider="{wordsModel.items}"
 			alternatingItemColors="[0xF6F6F6, 0xFFFFFF]"
 			change="listWords_changeHandler(event)" labelField="word" textAlign="center"
-			contentBackgroundColor="#29435E"/>
+			contentBackgroundColor="#29435E">
+	</s:List>
 	
 </s:View>

@@ -21,10 +21,13 @@ package database {
 
 		public const GET_WORDS:String = "SELECT * FROM words ORDER BY word DESC";
 		public const GET_WORD:String = "SELECT * FROM words WHERE wid = :wid";
-		public const GET_WORDS_FOR_NEST:String = "SELECT * FROM words WHERE nid = :nid ORDER BY word DESC";
-		public const GET_WORDS_FOR_LETTER:String = "SELECT * FROM words WHERE wordletter = :wordletter ORDER BY word DESC";
-		public const GET_WORDS_COMPLEX:String = "SELECT * FROM words WHERE wordletter = :wordletter AND nid = :nid ORDER BY word DESC";
-		public const SEARCH_WORDS:String = "SELECT * FROM words WHERE word LIKE :searchq ORDER BY word DESC";
+		public const GET_WORDS_FOR_NEST:String = "SELECT * FROM words WHERE nid = :nid ORDER BY word";
+		public const GET_WORDS_FOR_LETTER:String = "SELECT * FROM words WHERE wordletter = :wordletter ORDER BY word";
+		public const GET_WORDS_COMPLEX:String = "SELECT * FROM words WHERE wordletter = :wordletter AND nid = :nid ORDER BY word";
+		public const SEARCH_WORDS:String = "SELECT * FROM words WHERE word LIKE :searchq ORDER BY word";
+
+		public const GET_COMMENTS:String = "SELECT * FROM wordscomments WHERE wid = :wid ORDER BY commentdate DESC";
+		public const GET_COMMENT:String = "SELECT * FROM wordscomments WHERE commentid = :commentid";
 
 		public const GET_LAST_INSERT_ROWID:String = "SELECT last_insert_rowid()";
 		
@@ -37,7 +40,7 @@ package database {
 		public const UPDATE_SETTINGS:String = "UPDATE settings SET svalue = :svalue WHERE sname = :sname";
 		public const UPDATE_TEXTCONTENT:String = "UPDATE text_content SET title = :title, content = :content WHERE cid = :cid";
 		public const UPDATE_NESTS:String = "UPDATE nests SET nest = :nest, orderpos = :orderpos WHERE nid = :nid";
-		public const UPDATE_WORDSCOMMENTS:String = "UPDATE wordscomments SET author = :author, comment = :comment, commentdate = :commentdate, commentdatestamp = :commentdatestamp WHERE commentid = :commentid";
+		public const UPDATE_WORDSCOMMENTS:String = "UPDATE wordscomments SET wid = :wid, author = :author, comment = :comment, commentdate = :commentdate, commentdatestamp = :commentdatestamp WHERE commentid = :commentid";
 		public const UPDATE_WORDS:String = "UPDATE words SET wordletter = :wordletter, nid = :nid, word = :word, example = :example, ethimology = :ethimology, description = :description, derivatives = :derivatives, commentcount = :commentcount, addedbyurl = :addedbyurl, addedbyemail = :addedbyemail, addedby = :addedby, addedatdate = :addedatdate, addedatdatestamp = :addedatdatestamp WHERE wid = :wid";
 
 		public const DELETE_SETTINGS:String = "DELETE FROM settings";

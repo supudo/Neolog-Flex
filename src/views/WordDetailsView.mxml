@@ -18,6 +18,7 @@
 			import socnet.SNFacebook;
 			import socnet.SNTwitter;
 			
+			import spark.components.supportClasses.StyleableTextField;
 			import spark.events.IndexChangeEvent;
 			import spark.events.ViewNavigatorEvent;
 			
@@ -41,8 +42,8 @@
 			
 			protected function wordDetails_viewActivateHandler(event:ViewNavigatorEvent):void {
 				this.title = resourceManager.getString('resources','menu_Word');
-				this.btnComments.label = resourceManager.getString('resources','contextmenu_viewcomments');
-				this.btnSendComment.label = resourceManager.getString('resources','contextmenu_sendcomments');
+				this.btnComments.label = resourceManager.getString('resources','comms_viewcomments');
+				this.btnSendComment.label = resourceManager.getString('resources','comms_sendcomments');
 				
 				this.socNets = new ArrayCollection();
 				this.socNets.addItem(resourceManager.getString('resources','share_MenuShare'));
@@ -74,15 +75,28 @@
 					this.lblAuthor.text = this.currentWord.addedby;
 					this.lblWord.text = this.currentWord.word;
 					this.lblDescription.text = this.currentWord.description;
-					this.lblExamplesInfo.text = this.currentWord.examples;
+					this.lblExamplesInfo.text = this.currentWord.example;
 					this.lblEthimologyInfo.text = this.currentWord.ethimology;
 
 					var ad:String = "";
 					if (this.currentWord.addedbyemail != "")
-						ad += this.currentWord.addedbyemail;
-					if (this.currentWord.addedbyurl != "")
-						ad += ((ad == "") ? "" : " / ") + this.currentWord.addedbyurl;
-					this.lblAuthorEmailURL.text = ad;
+						ad += "<a href=\"mailto:" + this.currentWord.addedbyemail + "\">" + this.currentWord.addedbyemail + "</a>";
+					if (this.currentWord.addedbyurl != "") {
+						var u:String = this.currentWord.addedbyurl;
+						ad += ((ad == "") ? "" : " / ") + "<a href=\"" + ((u.indexOf("http://") < 0) ? "http://" : "") + u + "\">" + this.currentWord.addedbyurl + "</a>";
+					}
+					
+					var myStyleSheet:StyleSheet = new StyleSheet();
+					var styles:String = "body { background: #29435E; } a { color: #FFFFFF; text-decoration: underline; } a:hover { color: #F6F6F6; }";
+					myStyleSheet.parseCSS(styles);
+
+					StyleableTextField(this.txtAuthorEmailURL.textDisplay).styleSheet = myStyleSheet;
+					StyleableTextField(this.txtAuthorEmailURL.textDisplay).htmlText = ad;
+					StyleableTextField(this.txtAuthorEmailURL.textDisplay).textColor = 0xFFFFFF;
+					StyleableTextField(this.txtAuthorEmailURL.textDisplay).background = true;
+					StyleableTextField(this.txtAuthorEmailURL.textDisplay).backgroundColor = 0x29435E;
+					StyleableTextField(this.txtAuthorEmailURL.textDisplay).border = true;
+					StyleableTextField(this.txtAuthorEmailURL.textDisplay).borderColor = 0x29435E;
 				}
 			}
 			
@@ -150,15 +164,11 @@
 			}
 			
 			protected function btnComments_clickHandler(event:MouseEvent):void {
-				var obj:Object = new Object();
-				obj.oid = this.currentWord.wid;
-				navigator.pushView(CommentsView, obj);
+				navigator.pushView(WordsCommentsView, {wid: this.currentWord.wid});
 			}
 			
 			protected function btnSendComment_clickHandler(event:MouseEvent):void {
-				var obj:Object = new Object();
-				obj.oid = this.currentWord.wid;
-				navigator.pushView(SendCommentView, obj);
+				navigator.pushView(SendCommentView, {wid: this.currentWord.wid});
 			}
 			
 		]]>
@@ -176,40 +186,37 @@
 			</s:SkinnablePopUpContainer>
 		</fx:Component>
 	</fx:Declarations>
-	
+
 	<fx:Style>
 		.boldTitle { fontWeight: bold; color: #FFFFFF; }
 	</fx:Style>
-	
+
 	<s:navigationContent>
 		<s:Button icon="@Embed('assets/images/action-back.png')" click="btnBack_clickHandler(event)" />
 	</s:navigationContent>
 	<s:actionContent>
 		<s:Button id="btnShare" icon="@Embed('assets/images/action-share.png')" click="btnShare_clickHandler(event)" />
 	</s:actionContent>
-	
+
 	<s:SpinnerListContainer width="280" id="spCont" visible="false" depth="1">
 		<s:SpinnerList id="spShareNets" width="100%" dataProvider="{socNets}" change="spCategory_changeHandler(event)" />
 	</s:SpinnerListContainer>
-	
+
 	<s:Scroller height="100%" width="100%" depth="0">
 		<s:VGroup gap="10" paddingBottom="4" paddingTop="4" paddingLeft="4" paddingRight="4" width="100%" height="100%">
-			<s:Spacer height="6" />
+			<s:Spacer height="10" />
 			<s:Label id="lblWord" text="word..." width="100%" styleName="boldTitle" />
-			<s:Spacer height="6" />
-			<s:Label id="lblDescription" text="Description..." width="100%" styleName="boldTitle" />
+			<s:Label id="lblDescription" text="Description..." width="100%" color="#FFFFFF" />
 			<s:Spacer height="10" />
 			<s:Label id="lblExamples" text="Examples..." width="100%" styleName="boldTitle" />
-			<s:Spacer height="4" />
 			<s:Label id="lblExamplesInfo" text="..." width="100%" color="#FFFFFF" />
 			<s:Spacer height="10" />
 			<s:Label id="lblEthimology" text="Ethimology..." width="100%" styleName="boldTitle" />
-			<s:Spacer height="4" />
 			<s:Label id="lblEthimologyInfo" text="..." width="100%" color="#FFFFFF" />
 			<s:Spacer height="10" />
-			<s:Label id="lblAuthor" text="Author..." width="100%" styleName="boldTitle" />
-			<s:Spacer height="10" />
-			<s:Label id="lblAuthorEmailURL" text="..." width="100%" color="#FFFFFF" />
+			<s:Label id="lblAuthor" text="Author..." width="100%" color="#FFFFFF" />
+			<s:Spacer height="2" />
+			<s:TextArea id="txtAuthorEmailURL" width="100%" skinClass="spark.skins.mobile.TextInputSkin"/>
 			<s:Spacer height="10" />
 			<s:Button id="btnComments" label="Comments..." skinClass="skins.GazButtonSkin" click="btnComments_clickHandler(event)" />
 			<s:Spacer height="10" />

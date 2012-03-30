@@ -158,6 +158,10 @@ package utilities {
 					this.handleWordsForLetter(jsonResponse);
 					break;
 				}
+				case this.SERVICE_ID_WORDCOMMENTS: {
+					this.handleComments(jsonResponse);
+					break;
+				}
 				default: {
 					break;
 				}
@@ -209,11 +213,8 @@ package utilities {
 		private function handleSearch(jsonResponse:String):void {
 			var entities:Object = JSON.parse(jsonResponse);
 			if (entities != null && entities.Search != null) {
-				for (var i:uint=0; i<entities.Search.length; i++) {
-					var ent:Object = entities.Search[i];
-					var cid:uint = ent.wid;
-					this.dbHelper.addWord(ent);
-				}
+				for (var i:uint=0; i<entities.Search.length; i++)
+					this.dbHelper.addWord(entities.Search[i]);
 			}
 			this.dispatchEvent(new Event("searchFinished", true));
 		}
@@ -221,25 +222,28 @@ package utilities {
 		private function handleWordsForNest(jsonResponse:String):void {
 			var entities:Object = JSON.parse(jsonResponse);
 			if (entities != null && entities.FetchWordsForNest != null) {
-				for (var i:uint=0; i<entities.FetchWordsForNest.length; i++) {
-					var ent:Object = entities.FetchWordsForNest[i];
-					var cid:uint = ent.wid;
-					this.dbHelper.addWord(ent);
-				}
+				for (var i:uint=0; i<entities.FetchWordsForNest.length; i++)
+					this.dbHelper.addWord(entities.FetchWordsForNest[i]);
 			}
-			this.dispatchEvent(new Event("fetchFinished", true));
+			this.dispatchEvent(new Event("fetchWordsFinished", true));
 		}
 		
 		private function handleWordsForLetter(jsonResponse:String):void {
 			var entities:Object = JSON.parse(jsonResponse);
 			if (entities != null && entities.FetchWordsForLetter != null) {
-				for (var i:uint=0; i<entities.FetchWordsForLetter.length; i++) {
-					var ent:Object = entities.FetchWordsForLetter[i];
-					var cid:uint = ent.wid;
-					this.dbHelper.addWord(ent);
-				}
+				for (var i:uint=0; i<entities.FetchWordsForLetter.length; i++)
+					this.dbHelper.addWord(entities.FetchWordsForLetter[i]);
 			}
-			this.dispatchEvent(new Event("fetchFinished", true));
+			this.dispatchEvent(new Event("fetchWordsFinished", true));
+		}
+		
+		private function handleComments(jsonResponse:String):void {
+			var entities:Object = JSON.parse(jsonResponse);
+			if (entities != null && entities.FetchWordComments != null) {
+				for (var i:uint=0; i<entities.FetchWordComments.length; i++)
+					this.dbHelper.addComment(entities.FetchWordComments[i]);
+			}
+			this.dispatchEvent(new Event("fetchCommentsFinished", true));
 		}
 		
 		/**
@@ -285,6 +289,16 @@ package utilities {
 			AppSettings.getInstance().logThis(null, "getWordsForLetter : l = '" + letter + "'");
 			this.ServiceID = this.SERVICE_ID_WORDSFORLETTER;
 			this.httpService.url = AppSettings.getInstance().webServicesURL + this.SERVICE_WORDSFORLETTER + "&l=" + letter;
+			this.httpService.addEventListener(ResultEvent.RESULT, serviceResult);
+			this.httpService.addEventListener(FaultEvent.FAULT, serviceError);
+			var token:AsyncToken = this.httpService.send();
+			token.addResponder(new mx.rpc.Responder(onJSONResult, onJSONFault));
+		}
+		
+		public function getComments(wid:uint):void {
+			AppSettings.getInstance().logThis(null, "getComments : wid = '" + wid + "'");
+			this.ServiceID = this.SERVICE_ID_WORDCOMMENTS;
+			this.httpService.url = AppSettings.getInstance().webServicesURL + this.SERVICE_WORDCOMMENTS + "&wordID=" + wid;
 			this.httpService.addEventListener(ResultEvent.RESULT, serviceResult);
 			this.httpService.addEventListener(FaultEvent.FAULT, serviceError);
 			var token:AsyncToken = this.httpService.send();
