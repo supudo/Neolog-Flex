@@ -124,7 +124,7 @@
 					case 2: {
 						// Twitter
 						var tweet:String = "Neolog.bg - " + this.currentWord.word;
-						tweet += " http://wid.bg/word/" + this.currentWord.wid;
+						tweet += " http://neolog.bg/word/" + this.currentWord.wid;
 						tweet += " #neolog";
 						var engineTwitter:SNTwitter = new SNTwitter(stage);
 						engineTwitter._view = this;
