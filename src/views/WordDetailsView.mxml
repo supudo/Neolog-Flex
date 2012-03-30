@@ -168,7 +168,7 @@
 			}
 			
 			protected function btnSendComment_clickHandler(event:MouseEvent):void {
-				navigator.pushView(SendCommentView, {wid: this.currentWord.wid});
+				navigator.pushView(SendCommentView, {wid: this.currentWord.wid, word: this.currentWord.word});
 			}
 			
 		]]>

@@ -1,7 +1,136 @@
 <?xml version="1.0" encoding="utf-8"?>
 <s:View xmlns:fx="http://ns.adobe.com/mxml/2009" 
-		xmlns:s="library://ns.adobe.com/flex/spark" title="SendCommentView">
+		xmlns:s="library://ns.adobe.com/flex/spark"
+		backgroundColor="#29435E"
+		title="Send comment"
+		tabBarVisible="false"
+		viewActivate="sendComment_viewActivateHandler(event)">
+	
+	<fx:Metadata>
+		[ResourceBundle("resources")]
+	</fx:Metadata> 
+	
+	<fx:Script>
+		<![CDATA[
+			import events.DataEvent;
+			
+			import mx.core.FlexGlobals;
+			
+			import spark.events.ViewNavigatorEvent;
+			
+			import utilities.AppSettings;
+			import utilities.Synchronization;
+			
+			protected var _sync:Synchronization;
+			
+			private var wid:uint = 0;
+			private var word:String = "";
+			
+			private var _alert:AlertMsgComment;
+			
+			protected function sendComment_viewActivateHandler(event:ViewNavigatorEvent):void {
+				this.title = resourceManager.getString('resources','comms_sendcomments');
+				this.lblName.text = resourceManager.getString('resources','post_name');
+				this.lblComment.text = resourceManager.getString('resources','post_comment');
+				if (data != null) {
+					this.wid = data.wid;
+					this.word = data.word;
+					this.title = resourceManager.getString('resources','comms_sendcomments') + " - " + this.word;
+				}
+			}
+			
+			protected function btnPost_clickHandler(event:MouseEvent):void {
+				if (this.wid > 0) {
+					var obj:Object = {};
+					obj.w = this.wid;
+					obj.author = this.txtName.text;
+					obj.comment = this.txtComment.text;
+					
+					var errorMessage:String = "";
+					if (obj.author == "" || obj.comment == "")
+						errorMessage = resourceManager.getString('resources','post_error');
+					
+					if (errorMessage != "") {
+						var _alert:AlertMsgComment = new AlertMsgComment();
+						_alert.open(this, true);
+						_alert.alertPostTitleWindow.title = resourceManager.getString('resources','comms_comment');
+						_alert.alertPostText.text = errorMessage;
+						_alert.move(((this.width / 2) - (_alert.width / 2)), ((this.height / 2) - (_alert.height / 2)));
+					}
+					else {
+						this._sync = new Synchronization(null);
+						this._sync.addEventListener("sendCommentFinished", sendCommentFinished);
+						this._sync.dbHelper = AppSettings.getInstance().dbHelper;
+						this._sync.sendComment(obj);
+					}
+				}
+			}
+			
+			public function sendCommentFinished(event:events.DataEvent):void {
+				AppSettings.getInstance().logThis(null, "Send comment finished ... ");
+				
+				var postResponse:String = resourceManager.getString('resources','post_thanks');
+				if (event.data.postResponse == "true") {
+					this.removeEventListener("sendCommentFinished", sendCommentFinished);
+					this.txtName.text = "";
+					this.txtComment.text = "";
+				}
+				else
+					postResponse = resourceManager.getString('resources', event.data.postResponse);
+				
+				this._alert = new AlertMsgComment();
+				this._alert.open(this, true);
+				this._alert.addEventListener("alertOK_clickHandler", alertOK_clickHandler);
+				this._alert.alertPostTitleWindow.title = resourceManager.getString('resources','comms_comment');
+				this._alert.alertPostText.text = postResponse;
+				this._alert.move(((this.width / 2) - (_alert.width / 2)), ((this.height / 2) - (_alert.height / 2)));
+			}
+
+			protected function alertOK_clickHandler(event:Event):void {
+				this._alert.close();
+				navigator.popView();
+			}
+			
+		]]>
+	</fx:Script>
+	
 	<fx:Declarations>
 		<!-- Place non-visual elements (e.g., services, value objects) here -->
 	</fx:Declarations>
+	
+	<fx:Declarations>
+		<fx:Component className="AlertMsgComment">
+			<s:SkinnablePopUpContainer x="0" y="0">
+				<fx:Script>
+					<![CDATA[
+						import flash.events.Event;
+						
+						protected function alertOK_clickHandler(event:Event):void {
+							this.dispatchEvent(new Event("alertOK_clickHandler", true));
+						}
+					]]>
+				</fx:Script>
+				<s:TitleWindow id="alertPostTitleWindow" title="" close="close()" styleName="Alert">
+					<s:VGroup horizontalAlign="center" verticalAlign="middle" paddingTop="8" paddingBottom="8" paddingLeft="8" paddingRight="8" gap="5" width="100%">
+						<s:Label id="alertPostText" text="No results!"/>
+						<s:Button id="alertPostOK" label="OK" click="alertOK_clickHandler(event)"/>
+					</s:VGroup>
+				</s:TitleWindow>
+			</s:SkinnablePopUpContainer>
+		</fx:Component>
+	</fx:Declarations>
+	
+	<s:VGroup gap="10" paddingBottom="4" paddingTop="4" paddingLeft="4" paddingRight="4" width="100%" height="100%">
+		<s:Spacer height="10" />
+		<s:Label id="lblName" text="Name..." color="#FFFFFF" />
+		<s:TextInput id="txtName" width="100%" />
+		<s:Spacer height="10" />
+		<s:Label id="lblComment" text="Comment..." color="#FFFFFF" />
+		<s:TextArea id="txtComment" width="100%" height="260" />
+		<s:Spacer height="10" />
+		<s:HGroup horizontalAlign="center" width="100%">
+			<s:Button id="btnPost" label="Gaz..." skinClass="skins.GazButtonSkin" click="btnPost_clickHandler(event)" />
+		</s:HGroup>
+	</s:VGroup>
+	
 </s:View>

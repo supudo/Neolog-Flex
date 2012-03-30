@@ -162,6 +162,10 @@ package utilities {
 					this.handleComments(jsonResponse);
 					break;
 				}
+				case this.SERVICE_ID_SENDCOMMENT: {
+					this.handleSendComment(jsonResponse);
+					break;
+				}
 				default: {
 					break;
 				}
@@ -246,6 +250,18 @@ package utilities {
 			this.dispatchEvent(new Event("fetchCommentsFinished", true));
 		}
 		
+		private function handleSendComment(jsonResponse:String):void {
+			var returnObject:Object = new Object();
+			var response:Object = JSON.parse(jsonResponse);
+			if (response != null && response.SendComment != null) {
+				if (response.SendComment.result == "true")
+					returnObject.postResponse = "true";
+				else
+					returnObject.postResponse = response.SendComment.result;
+			}
+			this.dispatchEvent(new DataEvent("sendCommentFinished", true, false, returnObject));
+		}
+		
 		/**
 		 * Publics
 		 **/
@@ -303,6 +319,22 @@ package utilities {
 			this.httpService.addEventListener(FaultEvent.FAULT, serviceError);
 			var token:AsyncToken = this.httpService.send();
 			token.addResponder(new mx.rpc.Responder(onJSONResult, onJSONFault));
+		}
+
+		public function sendComment(obj:Object):void {
+			if (obj != null) {
+				AppSettings.getInstance().logThis(null, "obj...");
+				this.ServiceID = this.SERVICE_ID_SENDCOMMENT;
+				this.httpService.url = AppSettings.getInstance().webServicesURL + this.SERVICE_SENDCOMMENT;
+				this.httpService.addEventListener(ResultEvent.RESULT, serviceResult);
+				this.httpService.addEventListener(FaultEvent.FAULT, serviceError);
+				this.httpService.method = "POST";
+				this.httpService.useProxy = false;
+				this.httpService.contentType = HTTPService.CONTENT_TYPE_FORM;
+				this.httpService.showBusyCursor = true;
+				var token:AsyncToken = this.httpService.send({jsonobj:JSON.stringify(obj)});
+				token.addResponder(new mx.rpc.Responder(onJSONResult, onJSONFault));
+			}
 		}
 
 	}
